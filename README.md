@@ -1,2 +1,3 @@
-# docs
-Documentation for TorchUQ
+# TorchUQ Website
+
+Documentation: [torchuq.github.io](https://torchuq.github.io)
