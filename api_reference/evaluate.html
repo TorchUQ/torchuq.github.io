@@ -42,6 +42,9 @@
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">torchuq.evaluate Subpackage</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#module-torchuq.evaluate.distribution">torchuq.evaluate.distribution Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-torchuq.evaluate.interval">torchuq.evaluate.interval Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-torchuq.evaluate.point">torchuq.evaluate.point Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-torchuq.evaluate.quantile">torchuq.evaluate.quantile Module</a></li>
 </ul>
 </li>
 </ul>
@@ -87,17 +90,17 @@ containing code for evaluating and visualizing predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – a batch of distribution predictions</p></li>
-<li><p><strong>labels</strong> – array [batch_size] of labels</p></li>
-<li><p><strong>reduction</strong> – can be ‘none’, ‘mean’, or ‘max’</p></li>
-<li><p><strong>resolution</strong> – the number of discretization bins, higher resolution increases estimation accuracy but also requires more memory/compute</p></li>
+<li><p><strong>predictions</strong> (<em>distribution</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – array [batch_size] of labels.</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – the number of discretization bins, higher resolution increases estimation accuracy but also requires more memory/compute.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>the CRPS score, an array with shape [batch_size] or shape [] depending on the reduction.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>darray</p>
+<dd class="field-odd"><p>tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -105,21 +108,23 @@ containing code for evaluating and visualizing predictions.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="torchuq.evaluate.distribution.compute_ece">
 <span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.distribution.</span></span><span class="sig-name descname"><span class="pre">compute_ece</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debiased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.distribution.compute_ece" title="Permalink to this definition"></a></dt>
-<dd><p>Compute the (weighted) ECE score as in <a class="reference external" href="https://arxiv.org/abs/1807.00263">https://arxiv.org/abs/1807.00263</a></p>
+<dd><p>Compute the (weighted) ECE score as in <a class="reference external" href="https://arxiv.org/abs/1807.00263">https://arxiv.org/abs/1807.00263</a>.</p>
 <p>Note that this function has biased gradient because of the non-differentiable nature of sorting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – a batch of distribution predictions</p></li>
-<li><p><strong>labels</strong> – array [batch_size] of labels</p></li>
-<li><p><strong>debiased</strong> – if debiased=True then the finite sample bias is removed. If the labels are truely drawn from the predictions, the this function will in expectation return 0.</p></li>
+<li><p><strong>predictions</strong> (<em>labels are truely drawn from the</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – array [batch_size] of labels.</p></li>
+<li><p><strong>debiased</strong> (<em>bool</em>) – if debiased=True then the finite sample bias is removed. If the</p></li>
+<li><p><strong>predictions</strong> – </p></li>
+<li><p><strong>0.</strong> (<em>the this function will in expectation return</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>array [], the ECE score</p>
+<dd class="field-even"><p>the ECE score, which is an scalar array (array of shape []).</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>crps</p>
+<dd class="field-odd"><p>tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -127,19 +132,20 @@ containing code for evaluating and visualizing predictions.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="torchuq.evaluate.distribution.compute_mean">
 <span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.distribution.</span></span><span class="sig-name descname"><span class="pre">compute_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.distribution.compute_mean" title="Permalink to this definition"></a></dt>
-<dd><p>Compute the mean of the predictions</p>
+<dd><p>Compute the mean of the predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – a batch of distribution predictions</p></li>
-<li><p><strong>resolution</strong> – the number of discretization bins, higher resolution increases estimation accuracy but also requires more memory/compute</p></li>
+<li><p><strong>predictions</strong> (<em>distribution</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – the number of discretization bins, where higher resolution increases estimation accuracy but also requires more memory/compute.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>array [batch_size], the mean of the predictions</p>
+<dd class="field-even"><p>the computed mean, array [batch_size] or array [] depending on the reduction.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>mean</p>
+<dd class="field-odd"><p>tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -147,20 +153,21 @@ containing code for evaluating and visualizing predictions.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="torchuq.evaluate.distribution.compute_mean_std">
 <span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.distribution.</span></span><span class="sig-name descname"><span class="pre">compute_mean_std</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.distribution.compute_mean_std" title="Permalink to this definition"></a></dt>
-<dd><p>Same as compute_mean and compute_std, but combines into one function for better efficiency</p>
+<dd><p>Same as compute_mean and compute_std, but combines into one function for better efficiency.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – a batch of distribution predictions</p></li>
-<li><p><strong>resolution</strong> – the number of discretization bins, higher resolution increases estimation accuracy but also requires more memory/compute</p></li>
+<li><p><strong>predictions</strong> (<em>distribution</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+<li><p><strong>resolution</strong> – the number of discretization bins, where higher resolution increases estimation accuracy but also requires more memory/compute.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>array [batch_size], the mean of the predictions
-std: array [batch_size], the std of the predictions</p>
+<dd class="field-even"><p>the computed mean, array [batch_size] or array [] depending on the reduction.
+tensor: the computed standard deviation, array [batch_size] or array [] depending on the reduction.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>mean</p>
+<dd class="field-odd"><p>tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -168,19 +175,20 @@ std: array [batch_size], the std of the predictions</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="torchuq.evaluate.distribution.compute_std">
 <span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.distribution.</span></span><span class="sig-name descname"><span class="pre">compute_std</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.distribution.compute_std" title="Permalink to this definition"></a></dt>
-<dd><p>Compute the standard deviation of the predictions</p>
+<dd><p>Compute the standard deviation of the predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – a batch of distribution predictions</p></li>
-<li><p><strong>resolution</strong> – the number of discretization bins, higher resolution increases estimation accuracy but also requires more memory/compute</p></li>
+<li><p><strong>predictions</strong> (<em>distribution</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – the number of discretization bins, where higher resolution increases estimation accuracy but also requires more memory/compute.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>the standard deviation, array [batch_size] or array [], the standard deviation</p>
+<dd class="field-even"><p>the standard deviation, array [batch_size] or array [], the standard deviation.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>array</p>
+<dd class="field-odd"><p>tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -188,20 +196,22 @@ std: array [batch_size], the std of the predictions</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="torchuq.evaluate.distribution.plot_cdf">
 <span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.distribution.</span></span><span class="sig-name descname"><span class="pre">plot_cdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.distribution.plot_cdf" title="Permalink to this definition"></a></dt>
-<dd><p>Plot the CDF functions</p>
+<dd><p>Plot the CDF functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – required Distribution instance, a batch of distribution predictions</p></li>
-<li><p><strong>labels</strong> – optional array [batch_size], the labels</p></li>
-<li><p><strong>ax</strong> – optional matplotlib.axes.Axes, the axes to plot the figure on, if None automatically creates a figure with recommended size</p></li>
+<li><p><strong>predictions</strong> (<em>distribution</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels.</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – the axes to plot the figure on, if None automatically creates a figure with recommended size.</p></li>
+<li><p><strong>max_count</strong> (<em>int</em>) – the maximum number of CDFs to plot.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – the number of points to compute the density. Higher resolution leads to a more accurate plot, but also requires more computation.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>matplotlib.axes.Axes, the ax on which the plot is made</p>
+<dd class="field-even"><p>the ax on which the plot is made.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>ax</p>
+<dd class="field-odd"><p>axes</p>
 </dd>
 </dl>
 </dd></dl>
@@ -209,21 +219,22 @@ std: array [batch_size], the std of the predictions</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="torchuq.evaluate.distribution.plot_cdf_sequence">
 <span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.distribution.</span></span><span class="sig-name descname"><span class="pre">plot_cdf_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.distribution.plot_cdf_sequence" title="Permalink to this definition"></a></dt>
-<dd><p>Plot the CDF functions</p>
+<dd><p>Plot the CDF functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – required Distribution instance, a batch of distribution predictions</p></li>
-<li><p><strong>labels</strong> – optional array [batch_size], the labels</p></li>
-<li><p><strong>max_count</strong> – optional array [batch_size], the maximum number</p></li>
-<li><p><strong>ax</strong> – optional matplotlib.axes.Axes, the axes to plot the figure on, if None automatically creates a figure with recommended size</p></li>
+<li><p><strong>predictions</strong> (<em>distribution</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array [batch_size], if not provided then no label will be plotted.</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – the axes to plot the figure on, if None automatically creates a figure with recommended size.</p></li>
+<li><p><strong>max_count</strong> (<em>int</em>) – the maximum number of CDFs to plot.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – the number of points to compute the density. Higher resolution leads to a more accurate plot, but also requires more computation.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>matplotlib.axes.Axes, the ax on which the plot is made</p>
+<dd class="field-even"><p>the ax on which the plot is made.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>ax</p>
+<dd class="field-odd"><p>axes</p>
 </dd>
 </dl>
 </dd></dl>
@@ -231,22 +242,24 @@ std: array [batch_size], the std of the predictions</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="torchuq.evaluate.distribution.plot_density_sequence">
 <span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.distribution.</span></span><span class="sig-name descname"><span class="pre">plot_density_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_bw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.distribution.plot_density_sequence" title="Permalink to this definition"></a></dt>
-<dd><p>Plot the PDF of the predictions and the labels. For aesthetics the PDFs are reflected along y axis to make a symmetric violin shaped plot</p>
+<dd><p>Plot the PDF of the predictions and the labels.</p>
+<p>For aesthetics the PDFs are reflected along y axis to make a symmetric violin shaped plot.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – required Distribution instance, a batch of distribution predictions</p></li>
-<li><p><strong>labels</strong> – array [batch_size], the labels, if None then the labels are not plotted</p></li>
-<li><p><strong>ax</strong> – optional matplotlib.axes.Axes, the axes to plot the figure on, if None automatically creates a figure with recommended size</p></li>
-<li><p><strong>max_count</strong> – optional int, the maximum number of PDFs to plot</p></li>
-<li><p><strong>smooth_bw</strong> – optional int, smooth the PDF with a uniform kernel whose bandwidth is smooth_bw / resolution</p></li>
+<li><p><strong>predictions</strong> (<em>distribution</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, if None then the labels are not plotted.</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – the axes to plot the figure on, if None automatically creates a figure with recommended size.</p></li>
+<li><p><strong>max_count</strong> (<em>int</em>) – the maximum number of PDFs to plot.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – the number of points to compute the density. Higher resolution leads to a more accurate plot, but also requires more computation.</p></li>
+<li><p><strong>smooth_bw</strong> (<em>int</em>) – smooth the PDF with a uniform kernel whose bandwidth is smooth_bw / resolution.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>matplotlib.axes.Axes, the ax on which the plot is made</p>
+<dd class="field-even"><p>the ax on which the plot is made, it is an instance of matplotlib.axes.Axes.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>ax</p>
+<dd class="field-odd"><p>axes</p>
 </dd>
 </dl>
 </dd></dl>
@@ -254,20 +267,22 @@ std: array [batch_size], the std of the predictions</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="torchuq.evaluate.distribution.plot_icdf">
 <span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.distribution.</span></span><span class="sig-name descname"><span class="pre">plot_icdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.distribution.plot_icdf" title="Permalink to this definition"></a></dt>
-<dd><p>Plot the inverse CDF functions</p>
+<dd><p>Plot the inverse CDF functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – required Distribution instance, a batch of distribution predictions</p></li>
-<li><p><strong>labels</strong> – optional array [batch_size], the labels</p></li>
-<li><p><strong>ax</strong> – optional matplotlib.axes.Axes, the axes to plot the figure on, if None automatically creates a figure with recommended size</p></li>
+<li><p><strong>predictions</strong> (<em>distribution</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array [batch_size].</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – optional matplotlib.axes.Axes, the axes to plot the figure on. If None, automatically creates a figure with recommended size.</p></li>
+<li><p><strong>max_count</strong> (<em>int</em>) – the maximum number of CDFs to plot.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – the number of points to compute the density. Higher resolution leads to a more accurate plot, but also requires more computation.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>matplotlib.axes.Axes, the ax on which the plot is made</p>
+<dd class="field-even"><p>the ax on which the plot is made.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>ax</p>
+<dd class="field-odd"><p>axes</p>
 </dd>
 </dl>
 </dd></dl>
@@ -275,20 +290,288 @@ std: array [batch_size], the std of the predictions</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="torchuq.evaluate.distribution.plot_reliability_diagram">
 <span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.distribution.</span></span><span class="sig-name descname"><span class="pre">plot_reliability_diagram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.distribution.plot_reliability_diagram" title="Permalink to this definition"></a></dt>
-<dd><p>Plot the reliability diagram <a class="reference external" href="https://arxiv.org/abs/1807.00263">https://arxiv.org/abs/1807.00263</a></p>
+<dd><p>Plot the reliability diagram <a class="reference external" href="https://arxiv.org/abs/1807.00263">https://arxiv.org/abs/1807.00263</a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predictions</strong> – required Distribution instance, a batch of distribution predictions</p></li>
-<li><p><strong>labels</strong> – required array [batch_size], the labels</p></li>
-<li><p><strong>ax</strong> – optional matplotlib.axes.Axes, the axes to plot the figure on, if None automatically creates a figure with recommended size</p></li>
+<li><p><strong>predictions</strong> (<em>distribution</em>) – a batch of distribution predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, array [batch_size].</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – optional matplotlib.axes.Axes, the axes to plot the figure on. If None, automatically creates a figure with recommended size.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>matplotlib.axes.Axes, the ax on which the plot is made</p>
+<dd class="field-even"><p>the ax on which the plot is made, it is an instance of matplotlib.axes.Axes.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>ax</p>
+<dd class="field-odd"><p>axes</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-torchuq.evaluate.interval">
+<span id="torchuq-evaluate-interval-module"></span><h2>torchuq.evaluate.interval Module<a class="headerlink" href="#module-torchuq.evaluate.interval" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.interval.compute_coverage">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.interval.</span></span><span class="sig-name descname"><span class="pre">compute_coverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.interval.compute_coverage" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the empirical coverage. This function is not differentiable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of interval predictions, which is an array [batch_size, 2].</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the coverage, an array with shape [batch_size] or shape [] depending on the reduction.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.interval.compute_length">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.interval.</span></span><span class="sig-name descname"><span class="pre">compute_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.interval.compute_length" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the average length of an interval prediction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of interval predictions, which is an array [batch_size, 2].</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the interval length, an array with shape [batch_size] or shape [] depending on the reduction.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.interval.plot_interval_sequence">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.interval.</span></span><span class="sig-name descname"><span class="pre">plot_interval_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.interval.plot_interval_sequence" title="Permalink to this definition"></a></dt>
+<dd><p>Plot the PDF of the predictions and the labels.</p>
+<p>For aesthetics the PDFs are reflected along y axis to make a symmetric violin shaped plot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of interval predictions, which is an array [batch_size, 2].</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – the axes to plot the figure on. If None, automatically creates a figure with recommended size.</p></li>
+<li><p><strong>max_count</strong> (<em>int</em>) – the maximum number of intervals to plot.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the ax on which the plot is made.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>axes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.interval.plot_length_cdf">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.interval.</span></span><span class="sig-name descname"><span class="pre">plot_length_cdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_median</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.interval.plot_length_cdf" title="Permalink to this definition"></a></dt>
+<dd><p>Plot the CDF of interval length.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of interval predictions, which is an array [batch_size, 2].</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – the axes to plot the figure on, if None automatically creates a figure with recommended size.</p></li>
+<li><p><strong>plot_median</strong> (<em>bool</em>) – if true plot the median interval length.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the ax on which the plot is made.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>axes</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-torchuq.evaluate.point">
+<span id="torchuq-evaluate-point-module"></span><h2>torchuq.evaluate.point Module<a class="headerlink" href="#module-torchuq.evaluate.point" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.point.compute_huber_loss">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.point.</span></span><span class="sig-name descname"><span class="pre">compute_huber_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.point.compute_huber_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the Huber loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of point predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+<li><p><strong>delta</strong> (<em>float</em>) – the delta parameter for the huber loss, if None then automatically set it as the top 20% largest absolute error.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the huber loss, an array with shape [batch_size] or shape [] depending on the reduction.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.point.compute_l2_loss">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.point.</span></span><span class="sig-name descname"><span class="pre">compute_l2_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.point.compute_l2_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the L2 loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of point predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the l2 loss, an array with shape [batch_size] or shape [] depending on the reduction.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.point.compute_pinball_loss">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.point.</span></span><span class="sig-name descname"><span class="pre">compute_pinball_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.point.compute_pinball_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the pinball loss for the alpha-th quantile.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of point predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – the quantile to compute the pinball loss for.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the pinball loss, an array with shape [batch_size] or shape [] depending on the reduction.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.point.plot_conditional_bias">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.point.</span></span><span class="sig-name descname"><span class="pre">plot_conditional_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conditioning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'label'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.point.plot_conditional_bias" title="Permalink to this definition"></a></dt>
+<dd><p>Make the conditional bias diagram as described in [TODO: add paper reference].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of point predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – the axes to plot the figure on, if None automatically creates a figure with recommended size.</p></li>
+<li><p><strong>knn</strong> (<em>int</em>) – the number of nearest neighbors to average over. If None knn is set automatically.</p></li>
+<li><p><strong>conditioning</strong> (<em>str</em>) – can be ‘label’ or ‘prediction’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the ax on which the plot is made.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>axes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.point.plot_scatter">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.point.</span></span><span class="sig-name descname"><span class="pre">plot_scatter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.point.plot_scatter" title="Permalink to this definition"></a></dt>
+<dd><p>Plot the scatter plot between the point predictions and the labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of point predictions.</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – the axes to plot the figure on, if None automatically creates a figure with recommended size.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the ax on which the plot is made.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>axes</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-torchuq.evaluate.quantile">
+<span id="torchuq-evaluate-quantile-module"></span><h2>torchuq.evaluate.quantile Module<a class="headerlink" href="#module-torchuq.evaluate.quantile" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.quantile.compute_pinball_loss">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.quantile.</span></span><span class="sig-name descname"><span class="pre">compute_pinball_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.quantile.compute_pinball_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the pinball loss, which is a proper scoring rule for quantile predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of quantile predictions, which is an array with shape [batch_size, n_quantiles] or [batch_size, 2, n_quantiles].</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – the method to aggregate the results across the batch. Can be ‘none’, ‘mean’, ‘sum’, ‘median’, ‘min’, or ‘max’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the pinball loss, an array with shape [batch_size] or shape [] depending on the reduction.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.quantile.plot_quantile_calibration">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.quantile.</span></span><span class="sig-name descname"><span class="pre">plot_quantile_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.quantile.plot_quantile_calibration" title="Permalink to this definition"></a></dt>
+<dd><p>Plot the reliability diagram  for quantiles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of quantile predictions, which is an array with shape [batch_size, n_quantiles] or [batch_size, 2, n_quantiles].</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – the axes to plot the figure on, if None automatically creates a figure with recommended size.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the ax on which the plot is made.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>axes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchuq.evaluate.quantile.plot_quantile_sequence">
+<span class="sig-prename descclassname"><span class="pre">torchuq.evaluate.quantile.</span></span><span class="sig-name descname"><span class="pre">plot_quantile_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchuq.evaluate.quantile.plot_quantile_sequence" title="Permalink to this definition"></a></dt>
+<dd><p>Plot the PDF of the predictions and the labels.</p>
+<p>For aesthetics the PDFs are reflected along y axis to make a symmetric violin shaped plot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>tensor</em>) – a batch of quantile predictions, which is an array with shape [batch_size, n_quantiles] or [batch_size, 2, n_quantiles].</p></li>
+<li><p><strong>labels</strong> (<em>tensor</em>) – the labels, an array of shape [batch_size].</p></li>
+<li><p><strong>ax</strong> (<em>axes</em>) – the axes to plot the figure on, if None automatically creates a figure with recommended size.</p></li>
+<li><p><strong>max_count</strong> (<em>int</em>) – the maximum number of quantiles to plot.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the ax on which the plot is made.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>axes</p>
 </dd>
 </dl>
 </dd></dl>
