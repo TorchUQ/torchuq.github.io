@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overview &mdash; torchuq  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api_reference/index.html" />
+    <link rel="prev" title="Quick Start" href="quick_start.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> torchuq
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prediction-types">1. Prediction types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#evaluation-metrics">2. Evaluation Metrics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#computing-a-metric">2.1 Computing a metric</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#make-a-plot">2.2 Make a plot</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#transformations">3. Transformations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#online-prediction">Online Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transformations-options">Transformations Options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#transformations-for-regression-prediction-types">Transformations for regression prediction types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transformations-for-classification-prediction-types">Transformations for classification prediction types</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">torchuq</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Overview</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/overview.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline"></a></h1>
+<p>This page contains an overview of the design philosophy and usage of TorchUQ.</p>
+<p>The core of TorchUQ consists of the following three components: prediction types, evaluation metrics, and transformations.</p>
+<section id="prediction-types">
+<h2>1. Prediction types<a class="headerlink" href="#prediction-types" title="Permalink to this headline"></a></h2>
+<p>Before we start to work with any predictions we must think about how to represent our prediction. For example, when predicting the price of a house, we could represent it as a range, such as 120k-150k dollars, or we could represent it as a cumulative density function (CDF). TorchUQ supports around 10 different prediction types for regression and classification problems:</p>
+<ul class="simple">
+<li><p>For a list of types supported for regression problems, see [link]</p></li>
+<li><p>For a list of types supported for classification problems, see [link]</p></li>
+</ul>
+<p>In the next major update, we intend to support additional prediction types, such as multi-variate predictions.</p>
+</section>
+<section id="evaluation-metrics">
+<h2>2. Evaluation Metrics<a class="headerlink" href="#evaluation-metrics" title="Permalink to this headline"></a></h2>
+<p>Given a prediction, we will want to evaluate how good it is at capturing the ground truth. In TorchUQ all evaluation functions are in the <code class="docutils literal notranslate"><span class="pre">torchuq.evaluate</span></code>  sub-package, organized by prediction type. For example, functions that evaluate a categorical prediction are in the <code class="docutils literal notranslate"><span class="pre">torchuq.evaluate.categorical</span></code> sub-package, and functions that evaluate a distribution prediction are in the <code class="docutils literal notranslate"><span class="pre">torchuq.evaluate.distribution</span></code> sub-package.</p>
+<p>There are two ways to evaluate predictions: by computing a metric (such as the L2 loss or the log-likelihood), or by a visualization plot (such as the reliability diagram).</p>
+<section id="computing-a-metric">
+<h3>2.1 Computing a metric<a class="headerlink" href="#computing-a-metric" title="Permalink to this headline"></a></h3>
+<p>These functions compute a evaluation metric (such as L2 loss or ECE error) on a batch of predictions. All metric computation functions take the following format</p>
+<p><code class="docutils literal notranslate"> <span class="pre">torchuq.evaluate.{prediction_type}.compute_{metirc_name}(predictions,</span> <span class="pre">labels,</span> <span class="pre">reduction='mean')</span></code></p>
+<p>For example, to compute the ECE of a categorical prediction, use</p>
+<p><code class="docutils literal notranslate"><span class="pre">torchuq.evaluate.categorical.compute_ece(predictions,</span> <span class="pre">labels)</span></code></p>
+<p>Most metric evaluation functions take three arguments (but some may take more or less arguments)</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">predictions</span></code>: the prediction that we would like to evaluate. Must have the correct type. For example, if we use a function in the module <code class="docutils literal notranslate"><span class="pre">torchuq.evaluate.categorical</span></code> then the prediction must have <code class="docutils literal notranslate"><span class="pre">categorical</span></code> type.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">labels</span></code>: the true labels, not required for all functions. This should be an array of int for classification problems or an array of floats for regression problems.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reduction</span></code>: the str that decides how the computed metric is aggregated across the batch. This argument works in the same way as in pytorch. For example, the mean reduction indicates that we want to average the evaluation metrics.</p></li>
+</ul>
+</section>
+<section id="make-a-plot">
+<h3>2.2 Make a plot<a class="headerlink" href="#make-a-plot" title="Permalink to this headline"></a></h3>
+<p>These functions make a plot to visualize the quality of the batch of predictions.</p>
+<p><code class="docutils literal notranslate"> <span class="pre">torchuq.evaluate.{predition_type}.plot_{visualization_name}(predictions,</span> <span class="pre">labels,</span> <span class="pre">ax=None)</span></code></p>
+<p>For example, to compute the reliability diagram of a categorical prediction, use</p>
+<p><code class="docutils literal notranslate"><span class="pre">torchuq.evaluate.categorical.plot_reliability_diagram(predictions,</span> <span class="pre">labels)</span></code></p>
+<p>Most visualization functions take three arguments (but some may take more or less arguments)</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">predictions,</span> <span class="pre">labels</span></code>: same as metric evaluation functions</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ax</span></code>: the matplotlib axes to make the figure on. If <code class="docutils literal notranslate"><span class="pre">ax</span> <span class="pre">is</span> <span class="pre">None</span></code> (recommended), then a new figure (of suitable size) will be created. If <code class="docutils literal notranslate"><span class="pre">ax</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">None</span></code> then you should make sure the figure has the right size for visual appeal of the plot.</p></li>
+</ul>
+</section>
+</section>
+<section id="transformations">
+<h2>3. Transformations<a class="headerlink" href="#transformations" title="Permalink to this headline"></a></h2>
+<p>The final and key component of TorchUQ is transformation. We will want to transform low quality predictions (such as uncalibrated predictions) into new high quality predictions, usually with the help of some data.</p>
+<p>The main workhorse for transformation is the Calibrator abstract class, which defines a unified interface for an extremely large collection of calibration algorithms (including standard calibration algorithms, conformal prediction, decision calibration, multi-calibration, and many more).</p>
+<p><img alt="Calibration Illustration" src="_images/calibrator.png" /></p>
+<p>A calibrator class has three main functions:</p>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Calibrator.__init__</span></code>(input_type=’auto’)</p></li>
+</ol>
+<p>The initialization function can take optional arguments, but has only one required argument, which is the input type—it can be any of the prediction types in the previous section.</p>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Calibrator.train(predictions,</span> <span class="pre">labels,</span> <span class="pre">side_feature=None)</span></code></p></li>
+</ol>
+<p>The <code class="docutils literal notranslate"><span class="pre">Calibrator.train</span></code> function uses the training data to learn any parameters that is necessary to transform a low quality prediction into a high quality prediction. It takes as input a set of predictions and the corresponding labels. In addition, a few recalibration algorithms—such as group calibration or multicalibration—can take as input additional side features, and the transformation depends on the side feature.</p>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Calibrator.__call__(predictions,</span> <span class="pre">side_feature=None)</span></code></p></li>
+</ol>
+<p>To use the learned calibrator to transform new data, simply run <code class="docutils literal notranslate"><span class="pre">Calibrator(new_prediction)</span></code>. Note that several calibrator can transform a prediction into a different type. For example, the <code class="docutils literal notranslate"><span class="pre">ConformalCalibrator</span></code> class takes as input an original prediction of any type, and outputs new predictions that are distributions.</p>
+<section id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline"></a></h3>
+<p>For example, to use temperature scaling to recalibrate a categorical prediction use</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">calibrator</span> <span class="o">=</span> <span class="n">TemperatureScaling</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">calibrator</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+<span class="n">predictions_ts</span> <span class="o">=</span> <span class="n">calibrator</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="online-prediction">
+<h3>Online Prediction<a class="headerlink" href="#online-prediction" title="Permalink to this headline"></a></h3>
+<p>Finally many algorithms can be used in the online prediction setup, where data becomes available in a sequential order and can be used to update the best predictor for future data. This is achieved by</p>
+<p><code class="docutils literal notranslate"><span class="pre">Calibrator.update(predictions,</span> <span class="pre">labels,</span> <span class="pre">side_feature=None)</span> </code></p>
+<p>This function works in the same way as <code class="docutils literal notranslate"><span class="pre">calibrator.train</span></code>—except that instead of training the calibrator from scratch, it updates the calibrator with the new data. For an online prediction example see [link].</p>
+</section>
+<section id="transformations-options">
+<h3>Transformations Options<a class="headerlink" href="#transformations-options" title="Permalink to this headline"></a></h3>
+<p>While the above discussion concerns transformations with data, TorchUQ also supports
+direct transformations between types. For example, given a distribution prediction, we
+can take the 95% credible interval as an interval prediction. The follow tables show the
+options for direct transformations.</p>
+<section id="transformations-for-regression-prediction-types">
+<h4>Transformations for regression prediction types<a class="headerlink" href="#transformations-for-regression-prediction-types" title="Permalink to this headline"></a></h4>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="text-align:center head"><p></p></th>
+<th class="text-align:center head"><p>Point</p></th>
+<th class="text-align:center head"><p>Distribution</p></th>
+<th class="text-align:center head"><p>Interval</p></th>
+<th class="text-align:center head"><p>Quantile</p></th>
+<th class="text-align:center head"><p>Particle</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-align:center"><p>Point</p></td>
+<td class="text-align:center"><p>-</p></td>
+<td class="text-align:center"><p>No</p></td>
+<td class="text-align:center"><p>No</p></td>
+<td class="text-align:center"><p>No</p></td>
+<td class="text-align:center"><p>No</p></td>
+</tr>
+<tr class="row-odd"><td class="text-align:center"><p>Distribution</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+<td class="text-align:center"><p>-</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td class="text-align:center"><p>Interval</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+<td class="text-align:center"><p>No</p></td>
+<td class="text-align:center"><p>-</p></td>
+<td class="text-align:center"><p>No</p></td>
+<td class="text-align:center"><p>No</p></td>
+</tr>
+<tr class="row-odd"><td class="text-align:center"><p>Quantile</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+<td class="text-align:center"><p>-</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+</tr>
+<tr class="row-even"><td class="text-align:center"><p>Particle</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+</tr>
+<tr class="row-odd"><td class="text-align:center"><p>Ensemble</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+<td class="text-align:center"><p>-&gt;Dist</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="transformations-for-classification-prediction-types">
+<h4>Transformations for classification prediction types<a class="headerlink" href="#transformations-for-classification-prediction-types" title="Permalink to this headline"></a></h4>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="text-align:center head"><p></p></th>
+<th class="text-align:center head"><p>topk</p></th>
+<th class="text-align:center head"><p>categorical</p></th>
+<th class="text-align:center head"><p>uset</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-align:center"><p>topk</p></td>
+<td class="text-align:center"><p>-</p></td>
+<td class="text-align:center"><p></p></td>
+<td class="text-align:center"><p></p></td>
+</tr>
+<tr class="row-odd"><td class="text-align:center"><p>categorical</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+<td class="text-align:center"><p>-</p></td>
+<td class="text-align:center"><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td class="text-align:center"><p>uset</p></td>
+<td class="text-align:center"><p></p></td>
+<td class="text-align:center"><p></p></td>
+<td class="text-align:center"><p>-</p></td>
+</tr>
+<tr class="row-odd"><td class="text-align:center"><p>ensemble</p></td>
+<td class="text-align:center"><p></p></td>
+<td class="text-align:center"><p></p></td>
+<td class="text-align:center"><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quick_start.html" class="btn btn-neutral float-left" title="Quick Start" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api_reference/index.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, torchuq team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
