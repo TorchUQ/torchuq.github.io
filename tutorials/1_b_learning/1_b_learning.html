@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent &mdash; torchuq  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals" href="../1_c_1_conformal/1_c_1_conformal.html" />
+    <link rel="prev" title="Tutorial 1.a: Representing and Evaluating Uncertainty for Regression" href="../1_a_representation/1_a_representation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> torchuq
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../1_a_representation/1_a_representation.html">Tutorial 1.a: Representing and Evaluating Uncertainty for Regression</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#setting-up-the-environment">Setting up the Environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#learning-probability-predictions">Learning Probability Predictions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#learning-quantile-predictions">Learning Quantile Predictions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#using-torchuq-transforms-in-an-end-to-end-deep-learning-pipeline">Using Torchuq Transforms in an End-to-End Deep Learning Pipeline</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../1_c_1_conformal/1_c_1_conformal.html">Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">torchuq</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Tutorials</a> &raquo;</li>
+      <li>Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/tutorials/1_b_learning/1_b_learning.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorial-1-b-learning-uncertainty-representations-from-data-with-gradient-descent">
+<h1>Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent<a class="headerlink" href="#tutorial-1-b-learning-uncertainty-representations-from-data-with-gradient-descent" title="Permalink to this headline"></a></h1>
+<p>In the previous tutorial we demonstrated several types of predictions
+and metrics to measure their quality. Naturally, given a quality
+measurement we can also optimize the predictions to maximize the quality
+measure. This tutorials demonstrates how to access the large number of
+inbuilt datasets in torchuq and use torchuq metrics to train a model on
+these datasets.</p>
+<p>Most of the tutorial will follow the standard deep learning pipeline.
+The only difference is that the torchuq metrics used as training
+objectives. In torchuq, most metrics are differentiable, so they can be
+directly used as objective functions and optimized with gradient
+descent. To see which metrics are differentiable see the reference list
+in [TBD].</p>
+<section id="setting-up-the-environment">
+<h2>Setting up the Environment<a class="headerlink" href="#setting-up-the-environment" title="Permalink to this headline"></a></h2>
+<p>We first setup the environment of the tutorial. First load the necessary
+dependencies.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">optim</span><span class="p">,</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">torch.distributions.normal</span> <span class="kn">import</span> <span class="n">Normal</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../..&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">torchuq</span>
+
+<span class="c1"># device = torch.device(&#39;cuda:0&#39;)  # Use this option if you have GPU</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Dataset</strong>: We will use the UCI boston dataset. For your convenience
+torchuq includes a large collection of benchmark datasets with a single
+interface <code class="docutils literal notranslate"><span class="pre">torchuq.dataset.regression.get_regression_datasets</span></code> or
+<code class="docutils literal notranslate"><span class="pre">torchuq.dataset.classification.get_classification_datasets</span></code>. All the
+data files are included with the repo, so you should be able to use
+these datasets out-of-the-box. For a list of available datasets see
+<a class="reference external" href="https://github.com/ShengjiaZhao/torchuq/tree/main/torchuq/dataset">link</a>.
+In addition to these simple datasets, there are also some larger
+datasets that require manual download of the data files. To access these
+datasets see [link].</p>
+<p>An example usage to retrieve the simple datasets is</p>
+<p><code class="docutils literal notranslate"><span class="pre">train_dataset,</span> <span class="pre">val_dataset,</span> <span class="pre">test_dataset</span> <span class="pre">=</span> <span class="pre">torchuq.dataset.regression.get_regression_datasets(dataset_name,</span> <span class="pre">val_fraction=0.2,</span> <span class="pre">test_fraction=0.2,</span> <span class="pre">split_seed=0)</span></code></p>
+<p>You can split the data into train/val/test by setting non-zero values to
+the arguments <code class="docutils literal notranslate"><span class="pre">val_fraction</span></code> and <code class="docutils literal notranslate"><span class="pre">test_fraction</span></code>. You can optionally
+specify the random seed used in the data splitting by <code class="docutils literal notranslate"><span class="pre">split_seed</span></code>.
+The return values are pytorch Dataset instances, which can be
+conveniently used with pytorch dataloaders.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.dataset.regression</span> <span class="kn">import</span> <span class="n">get_regression_datasets</span>
+<span class="n">train_dataset</span><span class="p">,</span> <span class="n">val_dataset</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_regression_datasets</span><span class="p">(</span><span class="s1">&#39;boston&#39;</span><span class="p">,</span> <span class="n">val_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">test_fraction</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">x_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>   <span class="c1"># Get the dimension of the input features</span>
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Get the validation features and labels and move them to correct device</span>
+<span class="n">val_x</span><span class="p">,</span> <span class="n">val_y</span> <span class="o">=</span> <span class="n">val_dataset</span><span class="p">[:]</span>
+<span class="n">val_x</span><span class="p">,</span> <span class="n">val_y</span> <span class="o">=</span> <span class="n">val_x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">val_y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Loading</span> <span class="n">dataset</span> <span class="n">boston</span><span class="o">....</span>
+<span class="n">Splitting</span> <span class="n">into</span> <span class="n">train</span><span class="o">/</span><span class="n">val</span><span class="o">/</span><span class="n">test</span> <span class="k">with</span> <span class="mi">405</span><span class="o">/</span><span class="mi">101</span><span class="o">/</span><span class="mi">0</span> <span class="n">samples</span>
+<span class="n">Done</span> <span class="n">loading</span> <span class="n">dataset</span> <span class="n">boston</span>
+</pre></div>
+</div>
+<p><strong>Prediction Model</strong>: For simplicity, we use a 3 layer fully connected
+neural network as the prediction function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NetworkFC</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">,</span> <span class="n">out_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_feat</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NetworkFC</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">x_dim</span><span class="p">,</span> <span class="n">num_feat</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">num_feat</span><span class="p">,</span> <span class="n">num_feat</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">num_feat</span><span class="p">,</span> <span class="n">out_dim</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">leaky_relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">leaky_relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">x</span><span class="p">))))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc3</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="learning-probability-predictions">
+<h2>Learning Probability Predictions<a class="headerlink" href="#learning-probability-predictions" title="Permalink to this headline"></a></h2>
+<p>We can define a probability prediction model by mapping each input to
+the parameters of a distribution family (such as Gaussians). For
+example, the following code defines a prediction model that outputs
+Gaussian distributions. It is a network that outputs both the mean and
+standard deviation of the Gaussian distribution.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">net</span> <span class="o">=</span> <span class="n">NetworkFC</span><span class="p">(</span><span class="n">x_dim</span><span class="p">,</span> <span class="n">out_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="n">pred_raw</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">val_x</span><span class="p">)</span>
+<span class="n">pred_val</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">pred_raw</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">pred_raw</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>To learn the parameters of the prediction model, we can use any proper
+scoring rule. Recall from the previous tutorial: given a prediction
+<img class="math" src="../../_images/math/a5fa84b363f309ebc8fe7db38304541732c7de9a.png" alt="q"/>, and if the true label is <img class="math" src="../../_images/math/7daf0d4815e763eb90f0d5f1dc406f668c1e21db.png" alt="Y"/> with (unknown)
+distribution <img class="math" src="../../_images/math/88b86973035f25ac76ccb0304ee336a2fdb83577.png" alt="p_Y"/>, then a proper scoring rule is any function
+that satisfies <img class="math" src="../../_images/math/343299dac9c4ee5242b215f73d50e7b7018b6b06.png" alt="\mathbb{E}[s(p_Y, Y)]
+\leq \mathbb{E}[s(q, Y)]"/>. Intuitively,
+predicting the correct distribution <img class="math" src="../../_images/math/dc67ec1affed2212bd3c5fa30f8685275a3b91b9.png" alt="q = p_Y"/> minimizes the proper
+scoring rule.</p>
+<p>In our example we minimize the CRPS score. It could be replaced by the
+negative log likelihood (NLL) or any other proper scoring rule, and the
+results shouldn’t be fundamentally changed.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate.distribution</span> <span class="kn">import</span> <span class="n">compute_crps</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">5e-4</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
+    <span class="c1"># Evaluate the validation set performance</span>
+    <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">pred_raw</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">val_x</span><span class="p">)</span>
+            <span class="n">pred_val</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">pred_raw</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">pred_raw</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">())</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compute_crps</span><span class="p">(</span><span class="n">pred_val</span><span class="p">,</span> <span class="n">val_y</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Epoch </span><span class="si">%d</span><span class="s2">, loss=</span><span class="si">%.4f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">loss</span><span class="p">))</span>
+
+    <span class="c1"># Standard pytorch training loop</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bx</span><span class="p">,</span> <span class="n">by</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">pred_raw</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">bx</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">pred_raw</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">pred_raw</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">())</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">compute_crps</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">by</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Epoch</span> <span class="mi">0</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.6456</span>
+<span class="n">Epoch</span> <span class="mi">10</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.3775</span>
+<span class="n">Epoch</span> <span class="mi">20</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.2954</span>
+<span class="n">Epoch</span> <span class="mi">30</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.2719</span>
+<span class="n">Epoch</span> <span class="mi">40</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.2620</span>
+</pre></div>
+</div>
+<p>We can visualize the predicted distributions on the validation set.
+These are the same functions that were introduced in the previous
+tutorial.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate.distribution</span> <span class="kn">import</span> <span class="n">plot_density_sequence</span><span class="p">,</span> <span class="n">plot_reliability_diagram</span>
+
+<span class="c1"># Record the quantile predictions on the validation set</span>
+<span class="n">pred_raw</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">val_x</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+<span class="n">predictions_distribution</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">pred_raw</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">pred_raw</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">())</span>
+
+<span class="n">plot_density_sequence</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">,</span> <span class="n">val_y</span><span class="p">)</span>
+<span class="n">plot_reliability_diagram</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">,</span> <span class="n">val_y</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_12_0.png" src="../../_images/output_12_0.png" />
+<img alt="../../_images/output_12_1.png" src="../../_images/output_12_1.png" />
+</section>
+<section id="learning-quantile-predictions">
+<h2>Learning Quantile Predictions<a class="headerlink" href="#learning-quantile-predictions" title="Permalink to this headline"></a></h2>
+<p>Learning quantile predictions is very similar to learning distribution
+predictions. There are two differences: the prediction should have the
+correct shape <code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">n_quantiles]</span></code> or
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">n_quantiles,</span> <span class="pre">2]</span></code>, and we must use a proper scoring rule
+for quantiles. For the proper scoring rule we use the pinball loss,
+which is minimized if and only if the predicted quantiles matches the
+true quantiles.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate.quantile</span> <span class="kn">import</span> <span class="n">compute_pinball_loss</span>
+
+<span class="n">net</span> <span class="o">=</span> <span class="n">NetworkFC</span><span class="p">(</span><span class="n">x_dim</span><span class="p">,</span> <span class="n">out_dim</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">5e-4</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
+    <span class="c1"># Evaluate the validation set performance</span>
+    <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">val_x</span><span class="p">,</span> <span class="n">val_y</span> <span class="o">=</span> <span class="n">val_dataset</span><span class="p">[:]</span>
+            <span class="n">pred_val</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">val_x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compute_pinball_loss</span><span class="p">(</span><span class="n">pred_val</span><span class="p">,</span> <span class="n">val_y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Epoch </span><span class="si">%d</span><span class="s2">, loss=</span><span class="si">%.4f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">loss</span><span class="p">))</span>
+
+     <span class="c1"># Standard pytorch training loop</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bx</span><span class="p">,</span> <span class="n">by</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">bx</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">compute_pinball_loss</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">by</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Epoch</span> <span class="mi">0</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.3521</span>
+<span class="n">Epoch</span> <span class="mi">10</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.2042</span>
+<span class="n">Epoch</span> <span class="mi">20</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.1498</span>
+<span class="n">Epoch</span> <span class="mi">30</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.1366</span>
+<span class="n">Epoch</span> <span class="mi">40</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.1311</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate.quantile</span> <span class="kn">import</span> <span class="n">plot_quantile_sequence</span><span class="p">,</span> <span class="n">plot_quantile_calibration</span>
+
+<span class="c1"># Record the quantile predictions on the validation set</span>
+<span class="n">predictions_quantile</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">val_x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+<span class="n">plot_quantile_sequence</span><span class="p">(</span><span class="n">predictions_quantile</span><span class="p">,</span> <span class="n">val_y</span><span class="p">);</span>
+<span class="n">plot_quantile_calibration</span><span class="p">(</span><span class="n">predictions_quantile</span><span class="p">,</span> <span class="n">val_y</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_15_0.png" src="../../_images/output_15_0.png" />
+<img alt="../../_images/output_15_1.png" src="../../_images/output_15_1.png" />
+<section id="using-torchuq-transforms-in-an-end-to-end-deep-learning-pipeline">
+<h3>Using Torchuq Transforms in an End-to-End Deep Learning Pipeline<a class="headerlink" href="#using-torchuq-transforms-in-an-end-to-end-deep-learning-pipeline" title="Permalink to this headline"></a></h3>
+<p>One of the key functionality of Torchuq is <strong>transformation</strong>,
+i.e. converting a prediction into a different prediction. For example, a
+simple transformation is to convert a distribution prediction into an
+interval prediction. There is a very natural conversion: we simply take
+a credible interval of the predicted distribution. For a list of simple
+transformations see [TBD]. There are also sophisticated transformations
+(that we will introduce in the future tutorials), such as transforming
+ensemble predictions into calibrated distributions.</p>
+<p>In this tutorial we focus on end-to-end learning, and aim to show that
+most transformations in torchuq are differentiable, so can be
+incorporated into a deep learning pipeline as a network layer. As an
+example, the function
+<code class="docutils literal notranslate"><span class="pre">torchuq.transform.direct.quantile_to_distribution</span></code> converts a
+quantile prediction to a distribution prediction by fitting a kernel
+density estimator; it is a differentiable function. For demonstration
+purposes, we first predict a quantile prediction, then convert it to a
+distribution prediction, and finally optimize a proper scoring rule
+(negative log likelihood) on the distribution prediction.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.transform.direct</span> <span class="kn">import</span> <span class="n">quantile_to_distribution</span>
+<span class="kn">from</span> <span class="nn">torchuq.evaluate.distribution</span> <span class="kn">import</span> <span class="n">compute_crps</span><span class="p">,</span> <span class="n">compute_nll</span>
+
+<span class="n">net</span> <span class="o">=</span> <span class="n">NetworkFC</span><span class="p">(</span><span class="n">x_dim</span><span class="p">,</span> <span class="n">out_dim</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">5e-4</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>    <span class="c1"># Evaluate the validation performance</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">pred_raw</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">val_x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+            <span class="n">pred_val</span> <span class="o">=</span> <span class="n">quantile_to_distribution</span><span class="p">(</span><span class="n">pred_raw</span><span class="p">)</span>
+
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compute_nll</span><span class="p">(</span><span class="n">pred_val</span><span class="p">,</span> <span class="n">val_y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Epoch </span><span class="si">%d</span><span class="s2">, loss=</span><span class="si">%.4f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">loss</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bx</span><span class="p">,</span> <span class="n">by</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>  <span class="c1"># Standard pytorch training loop</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">pred_raw</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">bx</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+        <span class="n">pred_val</span> <span class="o">=</span> <span class="n">quantile_to_distribution</span><span class="p">(</span><span class="n">pred_raw</span><span class="p">)</span>
+
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">compute_nll</span><span class="p">(</span><span class="n">pred_val</span><span class="p">,</span> <span class="n">by</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Epoch</span> <span class="mi">0</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">2.7785</span>
+<span class="n">Epoch</span> <span class="mi">10</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">1.1145</span>
+<span class="n">Epoch</span> <span class="mi">20</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">0.9336</span>
+<span class="n">Epoch</span> <span class="mi">30</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">1.3190</span>
+<span class="n">Epoch</span> <span class="mi">40</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="mf">1.7267</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate.distribution</span> <span class="kn">import</span> <span class="n">plot_density_sequence</span><span class="p">,</span> <span class="n">plot_reliability_diagram</span>
+
+<span class="n">pred_raw</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">val_x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+<span class="n">predictions_distribution2</span> <span class="o">=</span> <span class="n">quantile_to_distribution</span><span class="p">(</span><span class="n">pred_raw</span><span class="p">)</span>
+
+<span class="n">plot_density_sequence</span><span class="p">(</span><span class="n">predictions_distribution2</span><span class="p">,</span> <span class="n">val_y</span><span class="p">)</span>
+<span class="n">plot_reliability_diagram</span><span class="p">(</span><span class="n">predictions_distribution2</span><span class="p">,</span> <span class="n">val_y</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_18_0.png" src="../../_images/output_18_0.png" />
+<img alt="../../_images/output_18_1.png" src="../../_images/output_18_1.png" />
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../1_a_representation/1_a_representation.html" class="btn btn-neutral float-left" title="Tutorial 1.a: Representing and Evaluating Uncertainty for Regression" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../1_c_1_conformal/1_c_1_conformal.html" class="btn btn-neutral float-right" title="Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, torchuq team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

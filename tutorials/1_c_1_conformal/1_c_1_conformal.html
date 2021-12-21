@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals &mdash; torchuq  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent" href="../1_b_learning/1_b_learning.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> torchuq
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../1_a_representation/1_a_representation.html">Tutorial 1.a: Representing and Evaluating Uncertainty for Regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../1_b_learning/1_b_learning.html">Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#offline-conformal-prediction">1. Offline Conformal Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#online-conformal-prediction">2. Online Conformal Prediction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">torchuq</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Tutorials</a> &raquo;</li>
+      <li>Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/tutorials/1_c_1_conformal/1_c_1_conformal.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorial-1-c-1-conformal-interval-prediction-from-any-prediction-to-valid-intervals">
+<h1>Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals<a class="headerlink" href="#tutorial-1-c-1-conformal-interval-prediction-from-any-prediction-to-valid-intervals" title="Permalink to this headline"></a></h1>
+<section id="offline-conformal-prediction">
+<h2>1. Offline Conformal Prediction<a class="headerlink" href="#offline-conformal-prediction" title="Permalink to this headline"></a></h2>
+<p>One of the basic requirement for an interval prediction is <strong>coverage</strong>.
+For example, an interval prediction has 95% coverage if the true label
+belongs to the predicted interval for 95% of the samples. In this
+tutorial we will show how to generate interval predictions with provably
+correct coverage. In particular, we assume we also have some type of
+prediction (it could be any type of predictions such as point/ensemble),
+and we would like to transform such predictions into interval
+predictions.</p>
+<p>The technique we use is called conformal prediction. We will focus on
+how to use conformal prediction (rather than how it works, which are
+introduced in many tutorials such as
+<a class="reference external" href="https://jmlr.csail.mit.edu/papers/volume9/shafer08a/shafer08a.pdf">SV</a>
+or
+<a class="reference external" href="https://people.eecs.berkeley.edu/~angelopoulos/blog/posts/gentle-intro/">AB</a>).
+We will think of conformal prediction as a (black box) algorithm that
+take as input a batch of original predictions (that can be any type
+including ensembles) and outputs a batch of interval predictions. Of
+course, there is no magic without data — conformal prediction algorithm
+needs to a batch of labeled validation data (i.e. a batch of original
+prediction / label pair). However, conformal prediction is extremely
+data efficient, and typically only require less than 50 samples (unless
+we want extremely high coverage).</p>
+<p>The main workhorse for conformal prediction is the class
+<code class="docutils literal notranslate"><span class="pre">torchuq.transform.conformal.ConformalIntervalPredictor</span></code>. We first
+import it the class, as well as some test prediction data (same as
+tutorial 1.a).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># As before we first setup the environment and load the test prediction</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../..&#39;</span><span class="p">)</span>   <span class="c1"># Include the directory that contains the torchuq package</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">reader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;pretrained/boston_pretrained.tar&#39;</span><span class="p">)</span>  <span class="c1"># Load the pretrained predictions</span>
+
+<span class="c1"># Split the data into validation and test, in this example we will use quantile predictions as the original predictions</span>
+<span class="n">val_preds</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;predictions_quantile&#39;</span><span class="p">][:</span><span class="mi">50</span><span class="p">]</span>
+<span class="n">val_labels</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">][:</span><span class="mi">50</span><span class="p">]</span>   <span class="c1"># Load the true label (i.e. the ground truth housing prices)</span>
+<span class="n">test_preds</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;predictions_quantile&#39;</span><span class="p">][</span><span class="mi">50</span><span class="p">:]</span>
+<span class="n">test_labels</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">][</span><span class="mi">50</span><span class="p">:]</span>  <span class="c1"># Used for testing</span>
+
+<span class="kn">from</span> <span class="nn">torchuq.transform.conformal</span> <span class="kn">import</span> <span class="n">ConformalIntervalPredictor</span>
+</pre></div>
+</div>
+<p>To use <code class="docutils literal notranslate"><span class="pre">ConformalIntervalPredictor</span></code> there are only three functions
+that you need to know</p>
+<ol class="arabic simple">
+<li><p>Constructor:
+<code class="docutils literal notranslate"><span class="pre">calibrator</span> <span class="pre">=</span> <span class="pre">ConformalIntervalPredictor(input_type='quantile')</span></code>,
+there is only one required argument, which is the prediction type, it
+is one of the types introduced in tutorial 1.a.</p></li>
+<li><p>Train: <code class="docutils literal notranslate"><span class="pre">ConformalIntervalPredictor.train(val_preds,</span> <span class="pre">val_labels)</span></code>
+trains the conformal predictor based on validation predictions and
+validation labels</p></li>
+<li><p>Test:
+<code class="docutils literal notranslate"><span class="pre">test_intervals</span> <span class="pre">=</span> <span class="pre">ConformalIntervalPredictor.__call__(test_preds)</span></code>
+outputs the valid interval predictions</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">calibrator</span> <span class="o">=</span> <span class="n">ConformalIntervalPredictor</span><span class="p">(</span><span class="n">input_type</span><span class="o">=</span><span class="s1">&#39;quantile&#39;</span><span class="p">,</span> <span class="n">coverage</span><span class="o">=</span><span class="s1">&#39;exact&#39;</span><span class="p">)</span>
+<span class="n">calibrator</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">val_preds</span><span class="p">,</span> <span class="n">val_labels</span><span class="p">)</span>
+<span class="n">test_intervals</span> <span class="o">=</span> <span class="n">calibrator</span><span class="p">(</span><span class="n">test_preds</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can visualize the intervals. Observe that approximately 90% of the
+labels are within the predicted confidence interval, which is equal to
+our <code class="docutils literal notranslate"><span class="pre">confidence=0.9</span></code>. This is not a conincidence, as conformal
+prediction can guarantees coverage if the data is i.i.d. (in fact, it
+only requires exchangeability).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate</span> <span class="kn">import</span> <span class="n">interval</span>
+<span class="n">interval</span><span class="o">.</span><span class="n">plot_interval_sequence</span><span class="p">(</span><span class="n">test_intervals</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_6_01.png" src="../../_images/output_6_01.png" />
+<p>There is an argument called <code class="docutils literal notranslate"><span class="pre">coverage</span></code> when creating the
+ConformalIntervalPredictor class. If you choose <code class="docutils literal notranslate"><span class="pre">coverage=exact</span></code> then
+the intervals have perfectly correct coverage in expectation (the
+probability that the label belongs to a predicted interval is <em>exactly</em>
+equal to <code class="docutils literal notranslate"><span class="pre">confidence</span></code>). If you choose <code class="docutils literal notranslate"><span class="pre">coverage=1/N</span></code> then the
+coverage is <img class="math" src="../../_images/math/76b20ffc6a2a339f7838adb421cf9107a1c78b9d.png" alt="0.9 \pm 1/N"/> where <img class="math" src="../../_images/math/3bfb3a64189a14b2704f4610827762d5e3145114.png" alt="N"/> is the number of
+validation samples.</p>
+<p>What’s the trade-off? Typically you get smaller intervals if
+<code class="docutils literal notranslate"><span class="pre">coverage=1/N</span></code> compared to <code class="docutils literal notranslate"><span class="pre">coverage=exact</span></code>. For example, the
+following code uses <code class="docutils literal notranslate"><span class="pre">coverage=1/N</span></code> and the intervals are smaller. In
+fact, if you use <code class="docutils literal notranslate"><span class="pre">coverage=exact</span></code> and have less than <code class="docutils literal notranslate"><span class="pre">1/confidence</span></code>
+validation samples, the calibrator might predict an infinitely large
+interval and output <img class="math" src="../../_images/math/b9eeeb613a8b1b7c3928d2e606cf58313fc8fb32.png" alt="[-\infty, +\infty]"/>. On the other hand, if
+you choose <code class="docutils literal notranslate"><span class="pre">coverage=1/N</span></code> then the calibrator will never predict an
+infinitely large interval.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">calibrator</span> <span class="o">=</span> <span class="n">ConformalIntervalPredictor</span><span class="p">(</span><span class="n">input_type</span><span class="o">=</span><span class="s1">&#39;quantile&#39;</span><span class="p">,</span> <span class="n">coverage</span><span class="o">=</span><span class="s1">&#39;1/N&#39;</span><span class="p">)</span>
+<span class="n">calibrator</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">val_preds</span><span class="p">,</span> <span class="n">val_labels</span><span class="p">)</span>
+<span class="n">test_intervals</span> <span class="o">=</span> <span class="n">calibrator</span><span class="p">(</span><span class="n">test_preds</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="n">interval</span><span class="o">.</span><span class="n">plot_interval_sequence</span><span class="p">(</span><span class="n">test_intervals</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_8_0.png" src="../../_images/output_8_0.png" />
+<p>We used quantile predictions as an example. Note that we could use any
+prediction type as input. The following example uses point predictions</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Split the data into validation and test, in this example we will use quantile predictions as the original predictions</span>
+<span class="n">val_preds</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;predictions_point&#39;</span><span class="p">][:</span><span class="mi">50</span><span class="p">]</span>
+<span class="n">test_preds</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;predictions_point&#39;</span><span class="p">][</span><span class="mi">50</span><span class="p">:]</span>
+<span class="n">calibrator</span> <span class="o">=</span> <span class="n">ConformalIntervalPredictor</span><span class="p">(</span><span class="n">input_type</span><span class="o">=</span><span class="s1">&#39;point&#39;</span><span class="p">,</span> <span class="n">coverage</span><span class="o">=</span><span class="s1">&#39;1/N&#39;</span><span class="p">)</span>   <span class="c1"># The only difference from before is that the input_type is different</span>
+<span class="n">calibrator</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">val_preds</span><span class="p">,</span> <span class="n">val_labels</span><span class="p">)</span>
+<span class="n">test_intervals</span> <span class="o">=</span> <span class="n">calibrator</span><span class="p">(</span><span class="n">test_preds</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="n">interval</span><span class="o">.</span><span class="n">plot_interval_sequence</span><span class="p">(</span><span class="n">test_intervals</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_10_0.png" src="../../_images/output_10_0.png" />
+</section>
+<section id="online-conformal-prediction">
+<h2>2. Online Conformal Prediction<a class="headerlink" href="#online-conformal-prediction" title="Permalink to this headline"></a></h2>
+<p>In many applications, the data come in as a continuous stream. For
+example, we might make a prediction every day for tomorrow’s weather.
+After predicting tomorrow’s weather, we observe the true label before
+making a prediction for the-day-after-tomorrow’s weather. Torchuq
+supports this mode of prediction as well.</p>
+<p>To make online predictions, the only new function you will need to know
+is <code class="docutils literal notranslate"><span class="pre">calibrator.update(predictions,</span> <span class="pre">labels)</span></code>. This functions works
+almost identically as <code class="docutils literal notranslate"><span class="pre">calibrator.train</span></code> except it keeps the previous
+validation data, while <code class="docutils literal notranslate"><span class="pre">calibrator.train</span></code> removes all validation data
+and starts anew. The following example shows how to make online
+predictions.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">calibrator</span> <span class="o">=</span> <span class="n">ConformalIntervalPredictor</span><span class="p">(</span><span class="n">input_type</span><span class="o">=</span><span class="s1">&#39;quantile&#39;</span><span class="p">,</span> <span class="n">coverage</span><span class="o">=</span><span class="s1">&#39;exact&#39;</span><span class="p">)</span>
+
+<span class="n">val_preds</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;predictions_quantile&#39;</span><span class="p">][:</span><span class="mi">50</span><span class="p">]</span>
+<span class="n">val_labels</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">][:</span><span class="mi">50</span><span class="p">]</span>   <span class="c1"># Load the true label (i.e. the ground truth housing prices)</span>
+
+<span class="k">def</span> <span class="nf">simulate_online</span><span class="p">(</span><span class="n">calibrator</span><span class="p">):</span>
+    <span class="c1"># There needs to be at least 1 data point before making any prediction</span>
+    <span class="n">calibrator</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">val_preds</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">],</span> <span class="n">val_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">prediction_history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">):</span>
+        <span class="n">test_interval_t</span> <span class="o">=</span> <span class="n">calibrator</span><span class="p">(</span><span class="n">val_preds</span><span class="p">[</span><span class="n">t</span><span class="p">:</span><span class="n">t</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>  <span class="c1"># Make a prediction for the new time step</span>
+        <span class="n">calibrator</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">val_preds</span><span class="p">[</span><span class="n">t</span><span class="p">:</span><span class="n">t</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">val_labels</span><span class="p">[</span><span class="n">t</span><span class="p">:</span><span class="n">t</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>   <span class="c1"># Update the calibrator based on the observed label</span>
+
+        <span class="n">prediction_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test_interval_t</span><span class="p">)</span>
+
+    <span class="c1"># Concat the interval predictions for plotting</span>
+    <span class="n">prediction_history</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">prediction_history</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">prediction_history</span>
+
+<span class="n">prediction_history</span> <span class="o">=</span> <span class="n">simulate_online</span><span class="p">(</span><span class="n">calibrator</span><span class="p">)</span>
+<span class="n">interval</span><span class="o">.</span><span class="n">plot_interval_sequence</span><span class="p">(</span><span class="n">prediction_history</span><span class="p">,</span> <span class="n">val_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">50</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_12_01.png" src="../../_images/output_12_01.png" />
+<p>Notably initially when there are very few observed data points, the
+intervals are very large. This is because we selected
+<code class="docutils literal notranslate"><span class="pre">coverage='exact'</span></code>. If we do not require exact coverage then the
+interval sizes can be much smaller.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">calibrator</span> <span class="o">=</span> <span class="n">ConformalIntervalPredictor</span><span class="p">(</span><span class="n">input_type</span><span class="o">=</span><span class="s1">&#39;quantile&#39;</span><span class="p">,</span> <span class="n">coverage</span><span class="o">=</span><span class="s1">&#39;1/N&#39;</span><span class="p">)</span>
+
+<span class="n">prediction_history</span> <span class="o">=</span> <span class="n">simulate_online</span><span class="p">(</span><span class="n">calibrator</span><span class="p">)</span>
+<span class="n">interval</span><span class="o">.</span><span class="n">plot_interval_sequence</span><span class="p">(</span><span class="n">prediction_history</span><span class="p">,</span> <span class="n">val_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">50</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_14_01.png" src="../../_images/output_14_01.png" />
+<p>In fact, torchuq supports even more general prediction problems. For
+example, we might make a prediction for the weather 7 days from today.
+We will only observe the true label after 7 predictions. This is often
+called online learning with delayed feedback. This can be achieved by
+calling the <code class="docutils literal notranslate"><span class="pre">calibrator.update</span></code> function when the feedback arrives.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../1_b_learning/1_b_learning.html" class="btn btn-neutral float-left" title="Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, torchuq team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

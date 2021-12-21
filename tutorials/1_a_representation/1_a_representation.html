@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial 1.a: Representing and Evaluating Uncertainty for Regression &mdash; torchuq  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent" href="../1_b_learning/1_b_learning.html" />
+    <link rel="prev" title="Tutorials" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> torchuq
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tutorial 1.a: Representing and Evaluating Uncertainty for Regression</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#running-example">Running example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#point-predictions">1. Point Predictions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#distribution-predictions">2. Distribution Predictions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#interval-predictions">3. Interval Predictions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#quantile-predictions">4. Quantile Predictions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../1_b_learning/1_b_learning.html">Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../1_c_1_conformal/1_c_1_conformal.html">Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">torchuq</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Tutorials</a> &raquo;</li>
+      <li>Tutorial 1.a: Representing and Evaluating Uncertainty for Regression</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/tutorials/1_a_representation/1_a_representation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorial-1-a-representing-and-evaluating-uncertainty-for-regression">
+<h1>Tutorial 1.a: Representing and Evaluating Uncertainty for Regression<a class="headerlink" href="#tutorial-1-a-representing-and-evaluating-uncertainty-for-regression" title="Permalink to this headline"></a></h1>
+<p>This tutorial is the first in a series of tutorials on using torchuq for
+uncertainty quantification. If you haven’t already, you can read the
+<a class="reference external" href="https://github.com/TorchUQ/torchuq/tree/main/examples/tutorial/0_introduction.md">Introduction</a>
+to understand the overall flow and objective of these tutorials.</p>
+<p>Before we start to work with any predictions we must first think about
+how to represent our prediction. For example, when predicting the price
+of a house, we might want to represent it as a single number (point
+prediction), such as 120k dollars, or we might want to represent it as a
+cumulative density function (CDF). Each representation has its pros and
+cons. Depending on the different requirements during
+training/deployment, we might even want to convert between different
+representations. For example, we might initially start from an ensemble
+prediction (i.e. a set of predictions) possibly because we trained
+multiple prediction models, then convert it into a cumulative density
+function prediction or a point prediction (which are more interpretable
+and easier to work with). Conversion is one of the main features of
+torchuq, and we will come back to this topic in a later tutorial.</p>
+<p>This notebook aims to introduce some of the popular representations for
+regression, and metrics to measure the quality of the prediction. We
+first list the types of predictions currently supported by torchuq for
+regression. You can skip this part and come back later as a reference.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 36%" />
+<col style="width: 23%" />
+<col style="width: 14%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Variable type/shape</p></th>
+<th class="head"><p>Special
+requirement</p></th>
+<th class="head"><p>torchuq
+sub-mod
+ule
+for
+evaluat
+ion</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Point</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">array</span> <span class="pre">[batch_size]</span> <span class="pre">w</span>
+<span class="pre">ith</span> <span class="pre">float32/64</span> <span class="pre">dtype</span></code></p></td>
+<td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torch</span>
+<span class="pre">uq.eval</span>
+<span class="pre">uate.po</span>
+<span class="pre">int</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Distribution</p></td>
+<td><p>Python class that
+behaves like
+<code class="docutils literal notranslate"><span class="pre">torch.distributions.</span>
+<span class="pre">Distribution</span></code></p></td>
+<td></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torch</span>
+<span class="pre">uq.eval</span>
+<span class="pre">uate.di</span>
+<span class="pre">stribut</span>
+<span class="pre">ion</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Interval</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">array</span> <span class="pre">[batch_size,</span> <span class="pre">2</span>
+<span class="pre">]</span></code></p></td>
+<td></td>
+<td><p><a href="#id1"><span class="problematic" id="id2">``</span></a>torch
+uq.eval
+uate.in
+terval`
+`</p></td>
+</tr>
+<tr class="row-odd"><td><p>Quantile</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">array</span> <span class="pre">[batch_size,</span> <span class="pre">n</span>
+<span class="pre">um_quantile,</span> <span class="pre">2]</span></code>
+or
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">num_qua</span>
+<span class="pre">ntile]</span></code></p></td>
+<td><p>The quantiles
+should be
+sorted,
+e.g. predicti
+on[i,
+j]
+<img class="math" src="../../_images/math/8a062baade83eb0aaa8c5b00f6fce6124847bd68.png" alt="\leq"/>
+prediction[i,
+j+1]</p></td>
+<td><p><a href="#id3"><span class="problematic" id="id4">``</span></a>torch
+uq.eval
+uate.qu
+antile`
+`</p></td>
+</tr>
+<tr class="row-even"><td><p>Particle</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">array</span> <span class="pre">[batch_size,</span> <span class="pre">n</span>
+<span class="pre">um_particle]</span></code></p></td>
+<td></td>
+<td><p><a href="#id5"><span class="problematic" id="id6">``</span></a>torch
+uq.eval
+uate.pa
+rticle`
+`</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ensemble</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dict:</span> <span class="pre">name</span> <span class="pre">-&gt;</span> <span class="pre">predic</span>
+<span class="pre">tion</span></code></p></td>
+<td><p>name must
+start with
+prediction
+type and a
+string (with
+no special
+characters),
+such as
+‘point_1’</p></td>
+<td><p>Not
+availab
+le</p></td>
+</tr>
+</tbody>
+</table>
+<p>Torchuq uses mandatory batching. For example, a point prediction
+variable (which is an array with shape <code class="docutils literal notranslate"><span class="pre">[batch_size]</span></code>) represents a
+sequence of predictions on a dataset with <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> many samples.
+Even if the dataset only contains 1 sample (i.e. <code class="docutils literal notranslate"><span class="pre">batch_size=1</span></code>), the
+predictions must be an array of shape <code class="docutils literal notranslate"><span class="pre">[1]</span></code> rather than a scalar.</p>
+<section id="running-example">
+<h2>Running example<a class="headerlink" href="#running-example" title="Permalink to this headline"></a></h2>
+<p>As a running example we will predict the housing prices on the Boston
+housing prices dataset. For convenience, we have pretrained a set of
+predictions. In the next chapters we will see how to use torchuq to
+learn these predictions from data (hint: it only takes a few lines of
+code). But for now let’s just load the pretrained predictions for
+visualization.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="c1"># Make sure that the torchuq package is in PYTHONPATH</span>
+<span class="c1"># If you are running this notebook in the original directory as in the repo, then the following statement should work</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../..&#39;</span><span class="p">)</span>   <span class="c1"># Include the directory that contains the torchuq package</span>
+
+<span class="n">reader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;pretrained/boston_pretrained.tar&#39;</span><span class="p">)</span>  <span class="c1"># Load the pretrained predictions</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span>   <span class="c1"># Load the true label (i.e. the ground truth housing prices)</span>
+</pre></div>
+</div>
+</section>
+<section id="point-predictions">
+<h2>1. Point Predictions<a class="headerlink" href="#point-predictions" title="Permalink to this headline"></a></h2>
+<p>Point prediction is the simplest type of prediction, where we use a
+single number to represent the prediction. Point predictions are
+widespread because of their simplicity — a single number is easy to
+communicate and interpret. However, point predictions do not represent
+the uncertainty in the prediction.</p>
+<p>A point prediction is represented by an torch array of shape
+<code class="docutils literal notranslate"><span class="pre">[batch_size]</span></code>. Here we load the pretrained point prediction and print
+its shape.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">predictions_point</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;predictions_point&#39;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">predictions_point</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">101</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>There are many ways to visualize or measure the quality of a point
+prediction. Here we explain several common ones.</p>
+<p><strong>Scatter plot</strong> visualizes the relationship between the prediction and
+the label. On the x-axis we plot the predicted value, and on the y-axis
+we plot the true label. If the prediction is perfect, then all points
+should lie on the diagonal line (i.e. predicted value = true label). In
+torchuq this is accomlished by the <code class="docutils literal notranslate"><span class="pre">plot_scatter</span></code> function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate</span> <span class="kn">import</span> <span class="n">point</span>    <span class="c1"># All point prediction metrics and visualizations are included in the torchuq.metric.point sub-package.</span>
+<span class="n">point</span><span class="o">.</span><span class="n">plot_scatter</span><span class="p">(</span><span class="n">predictions_point</span><span class="p">,</span> <span class="n">labels</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_6_0.png" src="../../_images/output_6_0.png" />
+<p><strong>Scoring Rules</strong> The classic way to evaluate a point prediction is to
+compute scoring rules [1].</p>
+<blockquote>
+<div><p><strong>A Detour into the Theory of Scoring Rules</strong></p>
+<p>Suppose we make a prediction <img class="math" src="../../_images/math/1b5e577d6216dca3af7d87aa122a0b9b360d6cb3.png" alt="y"/> and observe true label
+<img class="math" src="../../_images/math/7daf0d4815e763eb90f0d5f1dc406f668c1e21db.png" alt="Y"/>. How do we quantitatively evaluate how good or bad the
+prediction is? A function that evaluates prediction quality is
+usually called a scoring rule <img class="math" src="../../_images/math/106b04b320e75010b1d8029e59244f234f75e6f9.png" alt="s"/>, which is a map
+<img class="math" src="../../_images/math/3594a407723bf727b22f118a555659cf364a4002.png" alt="s: y, Y \mapsto s(y, Y) \in \mathbb{R}"/>. An example scoring
+rule is the L2 score: <img class="math" src="../../_images/math/b5b1995cc2a42cb9b5e8aac005ec0ec642a832bd.png" alt="s_{\text{L2}}(y, Y) = (y - Y)^2"/>.
+Intuitively, a high score indicates a poor prediction, and a low
+score indicates a good prediction. However, the exact meaning of
+good vs. poor prediction is ambiguous. The key issue is that a point
+prediction is never “perfect” if there is any uncertainty. If we
+predict <img class="math" src="../../_images/math/1b5e577d6216dca3af7d87aa122a0b9b360d6cb3.png" alt="y"/> while the true label is distributed according to
+the random variable <img class="math" src="../../_images/math/7daf0d4815e763eb90f0d5f1dc406f668c1e21db.png" alt="Y"/>, then we can never have <img class="math" src="../../_images/math/21fbf35e5491cb1f159debb6db52455268214d35.png" alt="y = Y"/>
+almost surely (unless <img class="math" src="../../_images/math/7daf0d4815e763eb90f0d5f1dc406f668c1e21db.png" alt="Y"/> is a deterministic random variable).
+For example, the median and the mean of <img class="math" src="../../_images/math/7daf0d4815e763eb90f0d5f1dc406f668c1e21db.png" alt="Y"/> might be
+different, one practitioner might want to predict the median, and
+another practitioner might want to predict the mean. The two goals
+are inherently conflictory.</p>
+<p>To resolve the ambiguity we can specify the prediction target [1].
+For example, we can aim to predict the mean, and design a scoring
+function that is small (i.e. indicates a good prediction) if the
+prediction <img class="math" src="../../_images/math/1b5e577d6216dca3af7d87aa122a0b9b360d6cb3.png" alt="y"/> is “close” to the mean <img class="math" src="../../_images/math/2c56c7d743c6c22a695e15c79b8c9f49107901ec.png" alt="\mathbb{E}[Y]"/>.
+More generally, let <img class="math" src="../../_images/math/b5e8d756bd6b1ebf5d1ed9559f6d15008ff4c875.png" alt="d_Y"/> denote the probability law of the
+random variable <img class="math" src="../../_images/math/7daf0d4815e763eb90f0d5f1dc406f668c1e21db.png" alt="Y"/>, we specify some functional
+<img class="math" src="../../_images/math/075cbf2162ecf48367ab1a901d835ef7d2fb3352.png" alt="F: d_Y \mapsto \mathbb{R}"/> and aim to predict
+<img class="math" src="../../_images/math/9c9891f5d78d63f047964e7180a7c62dd9f6909e.png" alt="\mathbb{F}(d_Y)"/>. In the previous example, <img class="math" src="../../_images/math/092f5b0e7bb7f7ff443dd879aba1b635077467af.png" alt="\mathbb{F}"/>
+is the mean functional <img class="math" src="../../_images/math/4ab689100f9562006563be66d0b0df36a2f8982b.png" alt="\mathbb{F}(d_Y) = \mathbb{E}(Y)"/>. We
+say that a scoring rule <img class="math" src="../../_images/math/106b04b320e75010b1d8029e59244f234f75e6f9.png" alt="s"/> elicits <img class="math" src="../../_images/math/092f5b0e7bb7f7ff443dd879aba1b635077467af.png" alt="\mathbb{F}"/> if the
+score is small whenever <img class="math" src="../../_images/math/6310038ed355f9810547519f0c2c0ba6d5ce18eb.png" alt="y \approx \mathbb{F}(d_Y)"/> and large
+whenever <img class="math" src="../../_images/math/b3e0f2a19ef59be6615a048d2b7c8bc698a50f5f.png" alt="y \not\approx \mathbb{F}(d_Y)"/>. Formally this is
+defined by</p>
+<div class="math">
+<p><img src="../../_images/math/c4358c354c08e135e1c5312870ece7d56c1f6d04.png" alt="\mathbb{E}[s(\mathbb{F}(d_Y), Y)] \leq \mathbb{E}[s(y, Y)], \forall y"/></p>
+</div><p>i.e. no prediction <img class="math" src="../../_images/math/1b5e577d6216dca3af7d87aa122a0b9b360d6cb3.png" alt="y"/> can achieve a smaller expected score
+than the desired prediction <img class="math" src="../../_images/math/4472b376736b5a5ced1503f780b78df52ad7f579.png" alt="F(d_Y)"/>. Many functionals have
+simple scoring rules that elicit them, as shown in the table below:</p>
+<table><tr><th><p>Functional</p>
+</th><th><p>Scoring rule</p>
+</th><th></th></tr><tr><th><p>Mean</p>
+</th><th><p>L2 score</p>
+</th><th><p><img class="math" src="../../_images/math/1730cc384a427a2804a1a3e4d6e7331689612115.png" alt="s(x, y) = (x - y)^2"/></p>
+</th><tr><tr><th><p>Median</p>
+</th><th><p>MAE score</p>
+</th><th><p><img class="math" src="../../_images/math/6ce0c5d4fc7f379743c8e5fbc5a3e831957ef8f1.png" alt="s(x, y) = \left\lvert x - y\right\rvert"/></p>
+</th><tr><tr><th><p><img class="math" src="../../_images/math/2f5aa019312e1bbc969deab8dca8b00f76025404.png" alt="\alpha"/>-quantile</p>
+</th><th><p>Pinball/hinge score</p>
+</th><th><p><img class="math" src="../../_images/math/ba9b9b3d6a323e47a4f978667792f4e74537e25c.png" alt="s(x, y) = \left\lbrace \begin{array}{ll} \alpha (y - x) &amp; y &gt; x \\ (1 - \alpha) (x - y) &amp; y \leq x \end{array} \right."/></p>
+</th></tr><tr><th><p>Unnamed</p>
+</th><th><p>Huber loss</p>
+</th><th><p><img class="math" src="../../_images/math/017108b41d5f8052d4edabafa5ed25f04b9a63d7.png" alt="s(x, y) = \left\lbrace \begin{array}{ll} (x - y)^2/2 &amp; |x - y| \leq \delta \\ |x - y| \delta - \delta^2/2 &amp; |x - y| &gt; \delta \end{array}\right."/></p>
+</th></tr></table><p>For example, the typical L2 loss used in most regression problems
+elicit the mean functional. In other words, it rewards a prediction
+<img class="math" src="../../_images/math/1b5e577d6216dca3af7d87aa122a0b9b360d6cb3.png" alt="y"/> that equals the expectation <img class="math" src="../../_images/math/210700a67e23e8f0aec4267cd309cf653b5604a2.png" alt="E[Y]"/> (conditioned on
+all observed variables) but may penalize a prediction that equals
+the median or mode. Not all functionals have a scoring rule that
+elicit them. For example, the conditional value at risk (cVaR) [1]
+cannot be elicited by any score. In general, it is difficult to know
+if a functional can be elicited or not. There are some necessary
+<em>or</em> sufficient conditions (but no necessary <em>and</em> sufficient
+condition is known to the author’s knowledge).</p>
+</div></blockquote>
+<p>In torchuq common scoring rules are implemented with the
+<code class="docutils literal notranslate"><span class="pre">compute_scores</span></code> function. This function returns a dictionary with
+many common scores.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">scores</span> <span class="o">=</span> <span class="n">point</span><span class="o">.</span><span class="n">compute_scores</span><span class="p">(</span><span class="n">predictions_point</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;L2&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1933</span><span class="p">),</span> <span class="s1">&#39;Huber&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.0591</span><span class="p">),</span> <span class="s1">&#39;pinball_0.1&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1191</span><span class="p">),</span> <span class="s1">&#39;pinball_0.2&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1244</span><span class="p">),</span> <span class="s1">&#39;pinball_0.3&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1298</span><span class="p">),</span> <span class="s1">&#39;pinball_0.4&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1351</span><span class="p">),</span> <span class="s1">&#39;pinball_0.5&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1404</span><span class="p">),</span> <span class="s1">&#39;pinball_0.6&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1457</span><span class="p">),</span> <span class="s1">&#39;pinball_0.7&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1510</span><span class="p">),</span> <span class="s1">&#39;pinball_0.8&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1563</span><span class="p">),</span> <span class="s1">&#39;pinball_0.9&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1616</span><span class="p">),</span> <span class="s1">&#39;MAE&#39;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">(</span><span class="mf">0.1404</span><span class="p">)}</span>
+</pre></div>
+</div>
+</section>
+<section id="distribution-predictions">
+<h2>2. Distribution Predictions<a class="headerlink" href="#distribution-predictions" title="Permalink to this headline"></a></h2>
+<p>A distribution prediction is a cumulative distribution function (CDF)
+over the label, i.e. it is a function <img class="math" src="../../_images/math/ec1e16f8d553fd1aeb98e833ba3dce859047b7af.png" alt="f: \mathbb{R} \to [0, 1]"/>
+that is monotonic and upward continuous. Ideally, a distribution
+prediction <img class="math" src="../../_images/math/5b7752c757e0b691a80ab8227eadb8a8389dc58a.png" alt="f"/> should predict the true probability <img class="math" src="../../_images/math/a17724605600a6196cb69ac628053d03b69a83c9.png" alt="f(c) =
+\text{Pr}[Y \leq c], \forall c"/> although this is
+usually very difficult to achieve exactly [2,3]. Distribution
+predictions are very informative. For example, if we want to predict the
+price of a house, then a CDF prediction would specify the (predicted)
+probability of each possible price value.</p>
+<p>Torchuq inherits the pytorch interface for representing a distribution,
+i.e. a distribution prediction is represented by any class that inherits
+the
+<a class="reference external" href="https://pytorch.org/docs/stable/distributions.html">torch.distributions.distribution.Distribution</a>
+interface. Duck typing is also supported (i.e. the class only has to
+behave like
+<a class="reference external" href="https://pytorch.org/docs/stable/distributions.html">torch.distributions.distribution.Distribution</a>).
+Here we load the pretrained distribution prediction and verify that it
+has the correct type.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">predictions_distribution</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;predictions_distribution&#39;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Normal(loc: torch.Size([101]), scale: torch.Size([101]))
+&lt;class &#39;torch.distributions.normal.Normal&#39;&gt;
+</pre></div>
+</div>
+<p>There are several metrics and visualizations available for distribution
+predictions:</p>
+<p><strong>Density Visualization</strong> A way to intuitively visualize a distribution
+prediction is to visualize its <a class="reference external" href="https://en.wikipedia.org/wiki/Probability_density_function">probability density
+function</a>
+(when it exists). In torchuq this is achieved by
+<code class="docutils literal notranslate"><span class="pre">distribution.plot_density_sequence</span></code> which takes as input a batch of
+distribution predictions, and plots the density for each prediction. The
+x-axis is the index of the prediction in the batch.</p>
+<p><strong>CDF Visualization</strong> We can also visualize the cumulative density
+function (CDF) of the distribution prediction. This is particularly
+useful when density visualzation fails. For example, not all
+distributions have a density because the CDF could be dis-continnuous.
+In torchuq, visualizing the CDF is accomplished by the
+<code class="docutils literal notranslate"><span class="pre">distribution.plot_cdf_sequence</span></code> function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate</span> <span class="kn">import</span> <span class="n">distribution</span>     <span class="c1"># All distribution prediction metrics and visualizations are included in the torchuq.metric.point sub-package.</span>
+<span class="c1"># Pass in the optional argument &quot;labels&quot; to plot the true labels in the same diagram</span>
+<span class="c1"># max_count is the maximum number of distributions to plot. Set a reasonable number (such as 50-100) to avoid cluttering the visualization.</span>
+<span class="n">distribution</span><span class="o">.</span><span class="n">plot_density_sequence</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">max_count</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">distribution</span><span class="o">.</span><span class="n">plot_cdf_sequence</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">max_count</span><span class="o">=</span><span class="mi">25</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_14_0.png" src="../../_images/output_14_0.png" />
+<img alt="../../_images/output_14_1.png" src="../../_images/output_14_1.png" />
+<p><strong>Scoring Rules</strong> To evaluate the quality of distribution predictions,
+we can use proper scoring rules.</p>
+<blockquote>
+<div><p><strong>Another Detour into the Theory of Scoring Rules</strong></p>
+<p>Let <img class="math" src="../../_images/math/81a2248d85ab7962d41c1d317398b81627d9e633.png" alt="f^*"/> be the true CDF of <img class="math" src="../../_images/math/7daf0d4815e763eb90f0d5f1dc406f668c1e21db.png" alt="Y"/>. A proper scoring rule
+is any function that returns small (expected) values when the
+predicted CDF <img class="math" src="../../_images/math/5b7752c757e0b691a80ab8227eadb8a8389dc58a.png" alt="f"/> is close to the true CDF <img class="math" src="../../_images/math/81a2248d85ab7962d41c1d317398b81627d9e633.png" alt="f^*"/>, and
+large values otherwise. Formally a proper scoring function is a map
+<img class="math" src="../../_images/math/f978b97c0c068632529490676a78264e95fad5a3.png" alt="s: f, Y \mapsto s(f, Y) \in \mathbb{R}"/> that satisfies</p>
+<div class="math">
+<p><img src="../../_images/math/71532ce5438b2301b22245c7c215bd66b3b86701.png" alt="\mathbb{E}[s(f^*, Y)] \leq \mathbb{E}[s(f, Y)], \forall \text{ CDF } f"/></p>
+</div><p>In other words, no CDF can achieve a smaller score than the true CDF
+<img class="math" src="../../_images/math/81a2248d85ab7962d41c1d317398b81627d9e633.png" alt="f^*"/> (in expectation). Scoring rules for distribution
+predictions are usually different from scoring rules for point
+predictions.</p>
+<p>There are many common proper scoring rules. Two commonly used
+scoring rules are</p>
+<ul><li><p>The negative log likelihood (NLL), defined by
+<img class="math" src="../../_images/math/72e4b5a6cbbb7a40d1437038398510cf553a390c.png" alt="s_{\text{NLL}}(f, y) = -\log f'(y)"/>. Log likelihood is only
+defined when <img class="math" src="../../_images/math/5b7752c757e0b691a80ab8227eadb8a8389dc58a.png" alt="f"/> is differentiable (i.e. has a density
+function).</p>
+</li><li><p>The continuous ranked probability score (CRPS), defined by
+<img class="math" src="../../_images/math/73b45a33b4d41c02c6c98954e4ca95cafd828a5c.png" alt="s_{\text{CRPS}}(f, y) = \int (f(x) - \mathbb{I}(x \geq y))^2 dx"/>.
+Unlike NLL, CRPS is defined even when <img class="math" src="../../_images/math/5b7752c757e0b691a80ab8227eadb8a8389dc58a.png" alt="f"/> is not
+differentiable.</p>
+</li></ul></div></blockquote>
+<p>In torchuq, scoring rules are implemented by functions such as
+<code class="docutils literal notranslate"><span class="pre">distribution.compute_crps</span></code> or <code class="docutils literal notranslate"><span class="pre">distribution.compute_nll</span></code>. If the
+score is not defined then these functions will return nan.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">crps</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">compute_crps</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">nll</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">compute_nll</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;CRPS score is </span><span class="si">%.4f</span><span class="s2">, nll score is </span><span class="si">%.4f</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">crps</span><span class="p">,</span> <span class="n">nll</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CRPS</span> <span class="n">score</span> <span class="ow">is</span> <span class="mf">0.2276</span><span class="p">,</span> <span class="n">nll</span> <span class="n">score</span> <span class="ow">is</span> <span class="mf">2.5124</span>
+</pre></div>
+</div>
+<p>The following code demonstrates the fact that CRPS/NLL are proper
+scoring rules. If we try to predict a less accurate distribution (for
+example by intentionally shifting the predicted distribution), then the
+CRPS/NLL score will increase.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Try computing the crps for a worse predictive distribution</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="n">bad_prediction</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">)</span>
+<span class="n">bad_prediction</span><span class="o">.</span><span class="n">loc</span> <span class="o">+=</span> <span class="mf">0.5</span>
+<span class="n">crps</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">compute_crps</span><span class="p">(</span><span class="n">bad_prediction</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">nll</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">compute_nll</span><span class="p">(</span><span class="n">bad_prediction</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;CRPS score is </span><span class="si">%.4f</span><span class="s2">, nll score is </span><span class="si">%.4f</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">crps</span><span class="p">,</span> <span class="n">nll</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CRPS</span> <span class="n">score</span> <span class="ow">is</span> <span class="mf">0.4767</span><span class="p">,</span> <span class="n">nll</span> <span class="n">score</span> <span class="ow">is</span> <span class="mf">18.2165</span>
+</pre></div>
+</div>
+<p><strong>Reliability Diagram and Calibration</strong> An important property for
+distribution prediction is (probabilistic) calibration [4, 5]. The idea
+behind calibration is that a probabilistic prediction should reflect the
+true distribution; for instance, 90% of the labels should be below the
+predicted 90% quantile. Formally let <img class="math" src="../../_images/math/df00656702b70b4b6f7ffbf6a9aa9a334bab1914.png" alt="F"/> be the random variable
+that denotes our prediction. (Notation clarification: in the previous
+discussion, we use <img class="math" src="../../_images/math/5b7752c757e0b691a80ab8227eadb8a8389dc58a.png" alt="f"/> to denote a single distribution prediction;
+however it is only meaningful to talk about probabilistic calibration
+for a set/batch of predictions. Here we should think of <img class="math" src="../../_images/math/df00656702b70b4b6f7ffbf6a9aa9a334bab1914.png" alt="F"/> a
+randomly selected prediction from the set/batch, and <img class="math" src="../../_images/math/7daf0d4815e763eb90f0d5f1dc406f668c1e21db.png" alt="Y"/> is the
+label associated with the selected prediction.) Perfect probabilistic
+calibration is defined by</p>
+<div class="math">
+<p><img src="../../_images/math/c9b30a2684744ee399e1f68c572edc45bc1b3d60.png" alt="\Pr[Y \leq F^{-1}(\alpha)] = \Pr[F(Y) \leq \alpha] = \alpha, \forall \alpha \in [0, 1]"/></p>
+</div><p>Probabilitic calibration is only one of many calibration properties for
+distribution predictions. For additional calibration notions see [2].</p>
+<p>To measure probabilistic calibration we can compute the deviation from
+perfect probabilistic calibration. There are two typical tools</p>
+<ol class="arabic">
+<li><p><strong>ECE metrics</strong> measures the average difference between the left hand
+side (LHS) and the right hand side (RHS) of equation above.</p>
+<div class="math">
+<p><img src="../../_images/math/da6a2d926286d11a67be6b5889a9b01352badd76.png" alt="\int_0^1 |\Pr[F(Y) \leq \alpha] - \alpha| d\alpha"/></p>
+</div></li>
+<li><p><strong>Reliability diagram</strong> plots the map from
+<img class="math" src="../../_images/math/cc793c5a00a44e463c00a2d60333ed294e2ac6ec.png" alt="\alpha \mapsto \Pr[F(Y) \leq \alpha]"/>. If the predictor is
+perfectly calibrated, then the map should be the identity map. In
+torchuq use <code class="docutils literal notranslate"><span class="pre">distribution.plot_reliability_diagram</span></code> to plot the
+reliability diagram. Because of statistical fluctuations, a predictor
+that is perfectly probabilistically calibrated (on the entire
+population, or given infinite data) might be uncalibrated on a finite
+dataset. Torchuq will also automatically compute the 99% confidence
+interval. If the recalibration diagram falls outside the confidence
+interval, then it very likely that the predictor is not calibrated on
+the entire population either.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ECE estimation is biased, if you enable the debiased option, then the expected ECE will be 0 for a perfectly calibrated predictor</span>
+<span class="n">ece</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">compute_ece</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">debiased</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Debiased ECE is </span><span class="si">%.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ece</span><span class="p">)</span>
+<span class="n">distribution</span><span class="o">.</span><span class="n">plot_reliability_diagram</span><span class="p">(</span><span class="n">predictions_distribution</span><span class="p">,</span> <span class="n">labels</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Debiased</span> <span class="n">ECE</span> <span class="ow">is</span> <span class="mf">0.069</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_20_1.png" src="../../_images/output_20_1.png" />
+<p>From the above ECE and reliability diagram, we can see that the
+predictions are not calibrated. We will discuss recalibration in a
+future tutorial.</p>
+</section>
+<section id="interval-predictions">
+<h2>3. Interval Predictions<a class="headerlink" href="#interval-predictions" title="Permalink to this headline"></a></h2>
+<p>There are situations where some uncertainty quantification is needed
+(hence a point prediction is insuffient), but we do not want to learn a
+full cumulative distribution function. An interval prediction is a good
+intermediate representation that can quantify uncertainty but is not too
+complex. An interval prediction consists of a lower bound and an upper
+bound (denote by <img class="math" src="../../_images/math/19eef1966f7c545af3ac8c0fa486974d873e3c65.png" alt="L"/>, <img class="math" src="../../_images/math/9098c1c4618d7a0f321cee441aabee7f1b57a19b.png" alt="U"/>). For example, an interval
+prediction can be “the price is between 120k and 150k. Such simple
+predictions are often easier to visualize and communicate to the general
+public.</p>
+<p>We say that an interval is valid if <img class="math" src="../../_images/math/04ad786b8f7040904a65b12fdc0bd417d4661580.png" alt="Y \in [L, U]"/> and say that a
+(batch) of interval predictions have <img class="math" src="../../_images/math/d520a12f1579170834c32ad5f656de081bbb36fe.png" alt="c"/>-coverage if <img class="math" src="../../_images/math/d520a12f1579170834c32ad5f656de081bbb36fe.png" alt="c"/>
+proportion of the intervals are valid.</p>
+<p>In torchuq, interval predictions are represented as an array of shape
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">2]</span></code> where <code class="docutils literal notranslate"><span class="pre">prediction[i,</span> <span class="pre">0]</span></code> denotes the lower bound
+of the <img class="math" src="../../_images/math/5aa339d4daf45a810dda332e3c80a0698e526e04.png" alt="i"/>-th prediction and <code class="docutils literal notranslate"><span class="pre">prediction[i,</span> <span class="pre">1]</span></code> denotes the
+upper bound of the <img class="math" src="../../_images/math/5aa339d4daf45a810dda332e3c80a0698e526e04.png" alt="i"/>-th prediction. Here we load the example
+interval prediction and verify that it has the right shape.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">predictions_interval</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;prediction_interval&#39;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">predictions_interval</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">101</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><strong>Direct Visualization</strong> We provide a function to directly visualize an
+interval prediction. The different colors indicate whether the interval
+prediction is valid or not (i.e. if the label belongs to the predicted
+interval).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate</span> <span class="kn">import</span> <span class="n">interval</span>
+<span class="n">interval</span><span class="o">.</span><span class="n">plot_interval_sequence</span><span class="p">(</span><span class="n">predictions_interval</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">AxesSubplot</span><span class="p">:</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;sample index&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;label value&#39;</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="tutorials/1_a_representation/output_25_1.png" src="tutorials/1_a_representation/output_25_1.png" />
+<p><strong>Length and Coverage</strong> Two important metrics for (a batch of) interval
+predictions are its length and coverage. You can use the function
+<code class="docutils literal notranslate"><span class="pre">compute_length</span></code> and <code class="docutils literal notranslate"><span class="pre">compute_coverage</span></code> to compute the average
+length and coverage.</p>
+<p>We can also plot the distribution of the lengths, i.e. we might want to
+know how many proportion of the intervals have a size that’s less than
+0.3, 0.5, etc. This can be accomlished by the function
+<code class="docutils literal notranslate"><span class="pre">plot_length_cdf</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">length</span> <span class="o">=</span> <span class="n">interval</span><span class="o">.</span><span class="n">compute_length</span><span class="p">(</span><span class="n">predictions_interval</span><span class="p">)</span>
+<span class="n">coverage</span> <span class="o">=</span> <span class="n">interval</span><span class="o">.</span><span class="n">compute_coverage</span><span class="p">(</span><span class="n">predictions_interval</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Length is </span><span class="si">%.3f</span><span class="s2">, coverage is </span><span class="si">%.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">coverage</span><span class="p">))</span>
+<span class="n">interval</span><span class="o">.</span><span class="n">plot_length_cdf</span><span class="p">(</span><span class="n">predictions_interval</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Length</span> <span class="ow">is</span> <span class="mf">0.549</span><span class="p">,</span> <span class="n">coverage</span> <span class="ow">is</span> <span class="mf">0.624</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_27_1.png" src="../../_images/output_27_1.png" />
+</section>
+<section id="quantile-predictions">
+<h2>4. Quantile Predictions<a class="headerlink" href="#quantile-predictions" title="Permalink to this headline"></a></h2>
+<p>Similar to interval predictions, quantile predictions are most useful
+when some uncertainty quantification is needed (hence a point prediction
+is insuffient), but we do not want to learn a full cumulative
+distribution function. An example quantile prediction is: “There is 10%
+chance that the housing price is less than 120k, and 90% chance that
+it’s less than 150k.</p>
+<p>In torchuq a quantile prediction is represented as an array of shape
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">num_quantiles,</span> <span class="pre">2]</span></code> where <code class="docutils literal notranslate"><span class="pre">prediction[:,</span> <span class="pre">:,</span> <span class="pre">0]</span></code> is the
+<strong>quantiles values</strong> (e.g. 120k, 150k), and <code class="docutils literal notranslate"><span class="pre">prediction[:,</span> <span class="pre">:,</span> <span class="pre">1]</span></code> is
+the <strong>quantile probability</strong> (e.g. 10%, 90%). For example, to represent
+our example price prediction, we can use an array <code class="docutils literal notranslate"><span class="pre">prediction</span></code> of
+shape <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">2,</span> <span class="pre">2]</span></code>, and set
+<code class="docutils literal notranslate"><span class="pre">prediction[0,</span> <span class="pre">0,</span> <span class="pre">0]</span> <span class="pre">=</span> <span class="pre">120k,</span> <span class="pre">prediction[0,</span> <span class="pre">0,</span> <span class="pre">1]</span> <span class="pre">=</span> <span class="pre">0.1,</span> <span class="pre">prediction[0,</span> <span class="pre">1,</span> <span class="pre">0]</span> <span class="pre">=</span> <span class="pre">150k,</span> <span class="pre">prediction[0,</span> <span class="pre">1,</span> <span class="pre">1]</span> <span class="pre">=</span> <span class="pre">0.9</span></code>.
+Again, we use mandatory batching, the batch dimension is necessary even
+if <code class="docutils literal notranslate"><span class="pre">batch_size=1</span></code> in this example.</p>
+<p>As a convenient shorthand, we can drop the quantile probabilities, and
+represent a quantile prediction as an array of shape
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">num_quantiles]</span></code> (only the quantile values are
+specified). The quantile probabilities are defined implicitly by the
+shape of the array (i.e. the value of <code class="docutils literal notranslate"><span class="pre">num_quantiles</span></code>). It is
+implicitly defined as
+<img class="math" src="../../_images/math/badca43bc5393916de94010c410d38cb355097ad.png" alt="\frac{1}{2 * \text{num quantiles}}, \frac{3}{2 * \text{num quantiles}}, \cdots, \frac{2 * \text{num quantiles}-1}{2 * \text{num quantiles}}"/>.
+For example, if <code class="docutils literal notranslate"><span class="pre">num_quantiles=10</span></code> then the quantile probabilities are
+implicitly defined as <img class="math" src="../../_images/math/d3afb8aa0a95998860e6c9cf604e79c169554bac.png" alt="0.05, 0.15, \cdots, 0.95"/>.</p>
+<p>Here we load the pretrained quantile predictions and verify that it has
+the correct shape. We use the implicit representation (with shape
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">num_quantiles]</span></code>).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">predictions_quantile</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;predictions_quantile&#39;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">predictions_quantile</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>   <span class="c1"># Here the quantiles are implicitly defined</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">101</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>There are several metrics and visualizations available for quantile
+predictions:</p>
+<p><strong>Quantile Visualization</strong> We can directly plot the quantile
+predictions. Torchuq provides a function
+<code class="docutils literal notranslate"><span class="pre">quantile.plot_quantile_sequence</span></code> where the different quantile
+probabilities are rendered in different color. For example, in the plot
+below the red colors are the upper quantiles (e.g. 95%) quantile, and
+the blue colors are the lower quantiles (e.g. 5% quantile). If the true
+label is also provided, it is plotted as green crosses. The x-axis is
+the index of the samples (e.g. <code class="docutils literal notranslate"><span class="pre">predictions[0],</span> <span class="pre">predictions[1],</span></code>
+<img class="math" src="../../_images/math/6dde8b994dc46f9d03857e94399ef7fd7c1e2740.png" alt="\cdots"/>).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate</span> <span class="kn">import</span> <span class="n">quantile</span>
+<span class="n">quantile</span><span class="o">.</span><span class="n">plot_quantile_sequence</span><span class="p">(</span><span class="n">predictions_quantile</span><span class="p">,</span> <span class="n">labels</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_31_0.png" src="../../_images/output_31_0.png" />
+<p><strong>Quantile calibration</strong> Similar to a CDF prediction, a quantile
+prediction should also satisfy calibration, e.g. 90% of the labels
+should be below the predicted 90% quantile. The quantile calibration
+diagram is almost the same as the reliability diagram (for distribution
+predictions). In torchuq we can plot a quantile calibration diagram by
+<code class="docutils literal notranslate"><span class="pre">quantile.plot_quantile_calibration</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quantile</span><span class="o">.</span><span class="n">plot_quantile_calibration</span><span class="p">(</span><span class="n">predictions_quantile</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">AxesSubplot</span><span class="p">:</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;target quantiles&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;actual quantiles&#39;</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="tutorials/1_a_representation/output_33_1.png" src="tutorials/1_a_representation/output_33_1.png" />
+<p>In this case, the prediction is not calibrated. For example, the
+bottom-left dot shows that about 20% of the labels are below the 5%
+predicted quantile. We will discuss calibrating quantiles in a later
+tutorial.</p>
+<p><strong>Scoring rules</strong> Similar to other types of predictions we discussed
+above, quantile predictions also have (proper) scoring rules.
+Intuitively a proper scoring rule should be small if the predicted
+quantile value equals the true quantile value, and large otherwise. For
+quantile predictions, a very important proper scoring rule is the
+<strong>pinball loss</strong> (also called the hinge loss).</p>
+<p>The following is an example of the pinball loss implemented in torchuq.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pinball</span> <span class="o">=</span> <span class="n">quantile</span><span class="o">.</span><span class="n">compute_pinball_loss</span><span class="p">(</span><span class="n">predictions_quantile</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Pinball loss is </span><span class="si">%.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">pinball</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Pinball</span> <span class="n">loss</span> <span class="ow">is</span> <span class="mf">0.111</span>
+</pre></div>
+</div>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline"></a></h2>
+<p>[1] Gneiting, Tilmann. “Making and evaluating point forecasts.” Journal
+of the American Statistical Association 106, no. 494 (2011): 746-762.</p>
+<p>[2] Vovk, Vladimir, Alex Gammerman, and Glenn Shafer. Algorithmic
+learning in a random world. Springer Science &amp; Business Media, 2005.</p>
+<p>[3] Zhao, Shengjia, Tengyu Ma, and Stefano Ermon. “Individual
+calibration with randomized forecasting.” In International Conference on
+Machine Learning, pp. 11387-11397. PMLR, 2020.</p>
+<p>[4] Gneiting, Tilmann, and Matthias Katzfuss. “Probabilistic
+forecasting.” Annual Review of Statistics and Its Application 1 (2014):
+125-151.</p>
+<p>[5] Kuleshov, Volodymyr, Nathan Fenner, and Stefano Ermon. “Accurate
+uncertainties for deep learning using calibrated regression.” In
+International Conference on Machine Learning, pp. 2796-2804. PMLR, 2018.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../1_b_learning/1_b_learning.html" class="btn btn-neutral float-right" title="Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, torchuq team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
