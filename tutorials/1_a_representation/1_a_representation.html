@@ -54,6 +54,8 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../1_b_learning/1_b_learning.html">Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../1_c_1_conformal/1_c_1_conformal.html">Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../2_a_representation/2_a_representation.html">Tutorial 2.a: Representing and Evaluating Uncertainty for Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../2_b_calibrate/2_b_calibrate.html">Tutorial 2.b: Learning Calibrated Probabilities: The Basics</a></li>
 </ul>
 </li>
 </ul>
@@ -530,7 +532,7 @@ interval).</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">AxesSubplot</span><span class="p">:</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;sample index&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;label value&#39;</span><span class="o">&gt;</span>
 </pre></div>
 </div>
-<img alt="tutorials/1_a_representation/output_25_1.png" src="tutorials/1_a_representation/output_25_1.png" />
+<img alt="../../_images/output_25_1.png" src="../../_images/output_25_1.png" />
 <p><strong>Length and Coverage</strong> Two important metrics for (a batch of) interval
 predictions are its length and coverage. You can use the function
 <code class="docutils literal notranslate"><span class="pre">compute_length</span></code> and <code class="docutils literal notranslate"><span class="pre">compute_coverage</span></code> to compute the average
@@ -614,7 +616,7 @@ predictions). In torchuq we can plot a quantile calibration diagram by
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">AxesSubplot</span><span class="p">:</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;target quantiles&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;actual quantiles&#39;</span><span class="o">&gt;</span>
 </pre></div>
 </div>
-<img alt="tutorials/1_a_representation/output_33_1.png" src="tutorials/1_a_representation/output_33_1.png" />
+<img alt="../../_images/output_33_1.png" src="../../_images/output_33_1.png" />
 <p>In this case, the prediction is not calibrated. For example, the
 bottom-left dot shows that about 20% of the labels are below the 5%
 predicted quantile. We will discuss calibrating quantiles in a later

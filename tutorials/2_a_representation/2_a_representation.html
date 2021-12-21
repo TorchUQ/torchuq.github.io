@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial 2.a: Representing and Evaluating Uncertainty for Classification &mdash; torchuq  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Tutorial 2.b: Learning Calibrated Probabilities: The Basics" href="../2_b_calibrate/2_b_calibrate.html" />
+    <link rel="prev" title="Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals" href="../1_c_1_conformal/1_c_1_conformal.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> torchuq
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../1_a_representation/1_a_representation.html">Tutorial 1.a: Representing and Evaluating Uncertainty for Regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../1_b_learning/1_b_learning.html">Tutorial 1.b: Learning Uncertainty Representations from Data with Gradient Descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../1_c_1_conformal/1_c_1_conformal.html">Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tutorial 2.a: Representing and Evaluating Uncertainty for Classification</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#top-k-prediction">1. Top-k Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#categorical-prediction">2. Categorical Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#uncertainty-set-prediction">3. Uncertainty Set Prediction</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../2_b_calibrate/2_b_calibrate.html">Tutorial 2.b: Learning Calibrated Probabilities: The Basics</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">torchuq</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Tutorials</a> &raquo;</li>
+      <li>Tutorial 2.a: Representing and Evaluating Uncertainty for Classification</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/tutorials/2_a_representation/2_a_representation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorial-2-a-representing-and-evaluating-uncertainty-for-classification">
+<h1>Tutorial 2.a: Representing and Evaluating Uncertainty for Classification<a class="headerlink" href="#tutorial-2-a-representing-and-evaluating-uncertainty-for-classification" title="Permalink to this headline"></a></h1>
+<p>The structure of this tutorial will mirror that of Tutorial 1.a.
+Tutorial 1.a focuses on regression problems, while the current tutorial
+focuses on classification problems.</p>
+<p>Before we start to work with any predictions, we must first think about
+how to represent our prediction. For example, when predicting image
+classes, we can represent the prediction as a categorical distribution
+over all possible labels, or as a set of likely labels. Each
+representation has its pros and cons. Depending on the different
+requirements during training/deployment, we may even want to convert
+between different representations.</p>
+<p>This notebook aims to introduce some popular representations, as well as
+metrics to measure the quality of the predictions.</p>
+<p>We first list the types of predictions currently supported by torchuq
+for classification. You can skip this part and come back later as a
+reference.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 36%" />
+<col style="width: 20%" />
+<col style="width: 15%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Variable type/shape</p></th>
+<th class="head"><p>Special
+requirement</p></th>
+<th class="head"><p>torchuq
+sub-modu
+le
+for
+evaluati
+on</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Topk</p></td>
+<td><p><a href="#id1"><span class="problematic" id="id2">``</span></a>int array [batch_siz
+e] or [batch_size, k]`
+`</p></td>
+<td><p>Each
+element
+take values
+in
+<code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">1,</span> <span class="pre">..</span>
+<span class="pre">.,</span> <span class="pre">num_clas</span>
+<span class="pre">ses}</span></code></p></td>
+<td><p><a href="#id3"><span class="problematic" id="id4">``</span></a>torchu
+q.evalua
+te.topk`
+`</p></td>
+</tr>
+<tr class="row-odd"><td><p>Categorical</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float32</span>&#160; <span class="pre">array</span> <span class="pre">[batc</span>
+<span class="pre">h_size,</span> <span class="pre">num_classes]</span></code></p></td>
+<td><p>Elements
+should be
+in
+<img class="math" src="../../_images/math/6b9f81517d068b15662f9d548d2c450bfe192115.png" alt="[0,
+1]"/>
+and sum to
+<img class="math" src="../../_images/math/ec830c85a5fbb48028fe797044da6bdfb924c2fa.png" alt="1"/></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torchu</span>
+<span class="pre">q.evalua</span>
+<span class="pre">te.categ</span>
+<span class="pre">orical</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>USet</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">array</span> <span class="pre">[batch_siz</span>
+<span class="pre">e,</span> <span class="pre">num_classes]</span></code></p></td>
+<td><p>Elements
+are 0 or 1</p></td>
+<td><p><a href="#id5"><span class="problematic" id="id6">``</span></a>torchu
+q.evalua
+te.uset`
+`</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ensemble</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dict:</span> <span class="pre">name</span> <span class="pre">-&gt;</span> <span class="pre">predic</span>
+<span class="pre">tion</span></code></p></td>
+<td><p>name must
+start with
+prediction
+type and a
+string
+(with no
+special
+characters)
+,
+such as
+‘categorica
+l_1’</p></td>
+<td><p>Unavaila
+ble</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># We must first import the dependencies, and make sure that the torchuq package is in PYTHONPATH</span>
+<span class="c1"># If you are running this notebook in the original directory as in the repo, then the following statement should work</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../..&#39;</span><span class="p">)</span>   <span class="c1"># Include the directory that contains the torchuq package</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+</pre></div>
+</div>
+<p>As a running example, we will use existing predictions for CIFAR-10. We
+first load these predictions.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;pretrained/resnet18-cifar10.pt&#39;</span><span class="p">)</span>
+
+<span class="c1"># These functions transform categorical predictions into different types of predictions</span>
+<span class="c1"># We will discuss transformations later, but for now we will simply use it to generate our example predictions</span>
+<span class="kn">from</span> <span class="nn">torchuq.transform.direct</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">predictions_categorical</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;categorical&#39;</span><span class="p">]</span>
+<span class="n">predictions_uset</span> <span class="o">=</span> <span class="n">categorical_to_uset</span><span class="p">(</span><span class="n">reader</span><span class="p">[</span><span class="s1">&#39;categorical&#39;</span><span class="p">])</span>
+<span class="n">predictions_top1</span> <span class="o">=</span> <span class="n">categorical_to_topk</span><span class="p">(</span><span class="n">reader</span><span class="p">[</span><span class="s1">&#39;categorical&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">predictions_top3</span> <span class="o">=</span> <span class="n">categorical_to_topk</span><span class="p">(</span><span class="n">reader</span><span class="p">[</span><span class="s1">&#39;categorical&#39;</span><span class="p">],</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="n">reader</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="top-k-prediction">
+<h2>1. Top-k Prediction<a class="headerlink" href="#top-k-prediction" title="Permalink to this headline"></a></h2>
+<p>The simplest type of prediction specifies the top-k labels (i.e. the k
+most likely predicted labels). The labels are represented as integers
+<img class="math" src="../../_images/math/55432d7628ae6de1691f1f12ed6faa13e1b3a099.png" alt="\lbrace 0, 1, \cdots, \text{n classes}-1 \rbrace"/>. A batch of
+top-k prediction is represented by an integer array of shape
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">k]</span></code>, where <code class="docutils literal notranslate"><span class="pre">predictions[i,</span> <span class="pre">:]</span></code> is a sequence of labels
+(which are represented as integers). A top-1 prediction can be either
+represented as an array of shape <code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">1]</span></code> or more
+conveniently as an array of shape <code class="docutils literal notranslate"><span class="pre">[batch_size]</span></code>.</p>
+<p>Here, we first verify that the loaded top3 and top1 predictions have the
+correct shape.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">predictions_top1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">predictions_top3</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">10000</span><span class="p">])</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>A very natural way to visualize the quality of a top-1 prediction is by
+the confusion matrix: among the samples that are predicted as class
+<img class="math" src="../../_images/math/5aa339d4daf45a810dda332e3c80a0698e526e04.png" alt="i"/>, how many of them actually belong to class <img class="math" src="../../_images/math/e3fc28292267f066fee7718c64f4bbfece521f24.png" alt="j"/>. To plot
+a confusion matrix in torchuq use
+<code class="docutils literal notranslate"><span class="pre">torchuq.evaluate.topk.plot_confusion_matrix</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate</span> <span class="kn">import</span> <span class="n">topk</span>
+<span class="n">topk</span><span class="o">.</span><span class="n">plot_confusion_matrix</span><span class="p">(</span><span class="n">predictions_top1</span><span class="p">,</span> <span class="n">labels</span><span class="p">);</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_8_01.png" src="../../_images/output_8_01.png" />
+<p>We can also evaluate metrics for these predictions, such as accuracy</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">topk</span><span class="o">.</span><span class="n">compute_accuracy</span><span class="p">(</span><span class="n">predictions_top1</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">topk</span><span class="o">.</span><span class="n">compute_accuracy</span><span class="p">(</span><span class="n">predictions_top3</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.9524</span><span class="p">)</span>
+<span class="n">tensor</span><span class="p">(</span><span class="mf">0.9951</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="categorical-prediction">
+<h2>2. Categorical Prediction<a class="headerlink" href="#categorical-prediction" title="Permalink to this headline"></a></h2>
+<p>The categorical prediction is perhaps the most useful prediction type
+for classification. This type of prediction returns the probability that
+a label is correct for each possible label. In torchuq a categorical
+prediction is represented as a float array of shape
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">n_classes]</span></code>, where <code class="docutils literal notranslate"><span class="pre">predictions[i,</span> <span class="pre">j]</span></code> is the
+probability that the <img class="math" src="../../_images/math/5aa339d4daf45a810dda332e3c80a0698e526e04.png" alt="i"/>-th sample takes the <img class="math" src="../../_images/math/e3fc28292267f066fee7718c64f4bbfece521f24.png" alt="j"/>-th label.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">predictions_categorical</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><strong>Confidence Calibration</strong>. Given a categorical prediction
+<img class="math" src="../../_images/math/5fa66c3850b83f0a4ab2471875b069802cbe4a5b.png" alt="p \in [0, 1]^{\text{n classes}}"/>, the confidence of the
+prediction is the largest probability in the array: <img class="math" src="../../_images/math/4bcc41de4e1041ddee51bc6e894fa3295ff24aa1.png" alt="\max_i p_i"/>.
+If this largest probability is close to 1, then the prediction is highly
+confident. A simple but important requirement for this type of
+prediction is confidence calibration: among the samples with confidence
+<img class="math" src="../../_images/math/d520a12f1579170834c32ad5f656de081bbb36fe.png" alt="c"/>, the top-1 accuracy should also be <img class="math" src="../../_images/math/d520a12f1579170834c32ad5f656de081bbb36fe.png" alt="c"/>. For instance, if
+a model is 90% confident in each of 100 predictions, it should predict
+the correct label for 90 of the samples. If this property doesn’t hold,
+then these confidence estimates are not meaningful.</p>
+<p>We can visualize confidence calibration by plotting the reliability
+diagram, which plots the (actual) accuracy <img class="math" src="../../_images/math/b3e65e3b6408fcfa00452530b73f55d1755f9965.png" alt="a"/> among samples with
+predicted confidence <img class="math" src="../../_images/math/d520a12f1579170834c32ad5f656de081bbb36fe.png" alt="c"/> vs. the predicted confidence <img class="math" src="../../_images/math/d520a12f1579170834c32ad5f656de081bbb36fe.png" alt="c"/>.
+Ideally the predicted confidence <img class="math" src="../../_images/math/d520a12f1579170834c32ad5f656de081bbb36fe.png" alt="c"/> will be equal to the actual
+accuracy <img class="math" src="../../_images/math/b3e65e3b6408fcfa00452530b73f55d1755f9965.png" alt="a"/>, so a perfectly calibrated model will yield a
+diagonal <img class="math" src="../../_images/math/58a6b992597ed93048ce288965ffa8b0c017efdb.png" alt="a=c"/> line. Deviations from this line represent
+miscalibration. As an example, we plot the reliability diagram for our
+example predictions below, and it is clear that the predictions are not
+well-calibrated. For example, among all samples with a confidence of
+about 0.9, the accuracy is only about 0.8. Hence the accuracy is lower
+than the confidence, and the predictions are over-confident.</p>
+<p>We can also compute the expected calibration error (ECE), which is a
+single number that measures mis-calibration. The ECE measures the
+average deviation from the ideal <img class="math" src="../../_images/math/58a6b992597ed93048ce288965ffa8b0c017efdb.png" alt="a=c"/> line. In practice, the ECE
+is approximated by binning — partitioning the predicted confidences into
+bins, and then taking a weighted average of the difference between the
+accuracy and average confidence for each bin. Pictorially, it is the
+average distance between the blue bars and the diagonal in the
+reliability diagram below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate</span> <span class="kn">import</span> <span class="n">categorical</span>
+<span class="n">categorical</span><span class="o">.</span><span class="n">plot_reliability_diagram</span><span class="p">(</span><span class="n">predictions_categorical</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">binning</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">);</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ECE-error is </span><span class="si">%.4f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">categorical</span><span class="o">.</span><span class="n">compute_ece</span><span class="p">(</span><span class="n">predictions_categorical</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">15</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ECE</span><span class="o">-</span><span class="n">error</span> <span class="ow">is</span> <span class="mf">0.0277</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_14_11.png" src="../../_images/output_14_11.png" />
+</section>
+<section id="uncertainty-set-prediction">
+<h2>3. Uncertainty Set Prediction<a class="headerlink" href="#uncertainty-set-prediction" title="Permalink to this headline"></a></h2>
+<p>The next type of representation is (uncertainty) set predictions.
+Uncertainty sets are almost the same as top-k; the main difference is
+that for top-k predictions, k must be specificed a priori, while for
+uncertainty sets, k can be different for each sample. In torchuq,
+uncertainty set predictions are represented by an integer array of shape
+<code class="docutils literal notranslate"><span class="pre">[batch_size,</span> <span class="pre">n_classes]</span></code>, where <code class="docutils literal notranslate"><span class="pre">predictions[i,</span> <span class="pre">j]</span> <span class="pre">=</span> <span class="pre">1</span></code> indicates
+that the <img class="math" src="../../_images/math/5aa339d4daf45a810dda332e3c80a0698e526e04.png" alt="i"/>-th sample includes the <img class="math" src="../../_images/math/e3fc28292267f066fee7718c64f4bbfece521f24.png" alt="j"/>-th label in its
+uncertainty set, and <code class="docutils literal notranslate"><span class="pre">predictions[i,</span> <span class="pre">j]</span> <span class="pre">=</span> <span class="pre">0</span></code> indicates that it is not.</p>
+<p>For set predictions, there are two important properties to consider:</p>
+<ul class="simple">
+<li><p>The coverage: the frequency with which the true label belongs to the
+predicted set. A high coverage means that the true label almost
+always belong to the predicted set.</p></li>
+<li><p>The set size: the number of elements in the prediction set</p></li>
+</ul>
+<p>Ideally, we would like high coverage with a small set size. We compute
+the coverage and the set size of the example predictions below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchuq.evaluate</span> <span class="kn">import</span> <span class="n">uset</span>
+
+<span class="n">coverage</span> <span class="o">=</span> <span class="n">uset</span><span class="o">.</span><span class="n">compute_coverage</span><span class="p">(</span><span class="n">predictions_uset</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+<span class="n">size</span> <span class="o">=</span> <span class="n">uset</span><span class="o">.</span><span class="n">compute_size</span><span class="p">(</span><span class="n">predictions_uset</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The coverage is </span><span class="si">%.3f</span><span class="s2">, average set size is </span><span class="si">%.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">coverage</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">coverage</span> <span class="ow">is</span> <span class="mf">0.987</span><span class="p">,</span> <span class="n">average</span> <span class="nb">set</span> <span class="n">size</span> <span class="ow">is</span> <span class="mf">1.268</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../1_c_1_conformal/1_c_1_conformal.html" class="btn btn-neutral float-left" title="Tutorial 1.c.1 Conformal (Interval) Prediction: From any Prediction to Valid Intervals" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../2_b_calibrate/2_b_calibrate.html" class="btn btn-neutral float-right" title="Tutorial 2.b: Learning Calibrated Probabilities: The Basics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, torchuq team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
